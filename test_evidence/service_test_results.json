@@ -1,0 +1,47 @@
+{
+  "backend_root": {
+    "status_code": 200,
+    "data": {
+      "app": "KrishiMitra AI Backend",
+      "framework": "Flask (Python 3.14 compatible)",
+      "status": "online",
+      "version": "1.0"
+    }
+  },
+  "backend_states": {
+    "status_code": 200,
+    "data": [
+      "Karnataka",
+      "Madhya Pradesh",
+      "Maharashtra"
+    ]
+  },
+  "backend_price_lookup": {
+    "status_code": 200,
+    "data": {
+      "commodity": "Wheat",
+      "date": "2026-08-23",
+      "last_updated": "2026-08-23",
+      "mandi": "Indore APMC (Choithram)",
+      "max_price": 2712.0,
+      "min_price": 2405.0,
+      "modal_price": 2559.0,
+      "source": "AGMARKNET (Seeded Database)"
+    }
+  },
+  "backend_query": {
+    "status_code": 200,
+    "data": {
+      "commodity": "Maize",
+      "detected_language": "en",
+      "district": "Shivamogga",
+      "intent": "price",
+      "speech_url": "/api/voice/tts?text=%F0%9F%8C%BE%20%2AMaize%20Rate%20at%20Shimoga%20APMC%2A",
+      "text": "\ud83c\udf3e *Maize Rate at Shimoga APMC* (2026-08-23)\n\n\u2022 Modal Price: *\u20b92276.0* / quintal\n\u2022 Min Price: *\u20b92139.0*\n\u2022 Max Price: *\u20b92412.0*\n\u2022 Source: AGMARKNET (Seeded Database)\n\n\ud83d\udcca View 7-day price trends and compare nearby mandis at:\nhttp://localhost:3001/?tab=mandi&mandi=Shimoga%20APMC&commodity=Maize"
+    }
+  },
+  "frontend_page": {
+    "status_code": 200,
+    "snippet": "<!DOCTYPE html><html lang=\"en\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"/_next/static/css/app/layout.css?v=1787489458304\" data-precedence=\"next_static/css/app/layout.css\"/><link rel=\"preload\" as=\"script\" fetchPriority=\"low\" href=\"/_next/static/chunks/webpack.js?v=1787489458304\"/><script src=\"/_next/static/chunks/main-app.js?v=1787489458304\" async=\"\"></script><script src=\"/_next/static/chunks/app-pages-internals"
+  }
+}

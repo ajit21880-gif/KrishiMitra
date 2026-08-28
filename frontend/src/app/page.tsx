@@ -43,7 +43,8 @@ const TRANSLATIONS = {
     offline_mode: "Offline Mode (Cached Prices Active)",
     last_updated: "Last Updated",
     no_records: "No price records found. Try another Mandi or crop.",
-    msp: "MSP Support Price"
+    msp: "MSP Support Price",
+    greeting: "Hello! How can I help you with your agriculture queries today?"
   },
   hi: {
     app_title: "कृषिमित्र एआई",
@@ -76,7 +77,8 @@ const TRANSLATIONS = {
     offline_mode: "ऑफलाइन मोड (कैश भाव सक्रिय)",
     last_updated: "अंतिम अपडेट",
     no_records: "कोई भाव रिकॉर्ड नहीं मिला। दूसरी मंडी या फसल चुनें।",
-    msp: "MSP न्यूनतम समर्थन मूल्य"
+    msp: "MSP न्यूनतम समर्थन मूल्य",
+    greeting: "नमस्ते! मैं आपकी कृषि संबंधी समस्याओं में कैसे मदद कर सकता हूँ?"
   },
   kn: {
     app_title: "ಕೃಷಿಮಿತ್ರ AI",

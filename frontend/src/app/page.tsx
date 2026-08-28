@@ -143,7 +143,7 @@ export default function Home() {
   const [isOffline, setIsOffline] = useState(false);
   
   // API URL Config
-  const BACKEND_URL = "http://localhost:8000";
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
   // Mandi Dropdown States
   const [states, setStates] = useState<string[]>([]);

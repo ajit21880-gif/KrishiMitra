@@ -35,7 +35,32 @@ def seed_database():
             (str(uuid.uuid4()), "Madhya Pradesh", "Indore", "Indore APMC (Choithram)", "MP-IND-01", 22.7196, 75.8577),
             (str(uuid.uuid4()), "Madhya Pradesh", "Ujjain", "Ujjain APMC", "MP-UJN-02", 23.1760, 75.7885),
             (str(uuid.uuid4()), "Maharashtra", "Nashik", "Lasalgaon APMC", "MH-NSK-01", 20.1444, 74.2250),
-            (str(uuid.uuid4()), "Maharashtra", "Pune", "Pune APMC (Gultekdi)", "MH-PUN-02", 18.5204, 73.8567)
+            (str(uuid.uuid4()), "Maharashtra", "Pune", "Pune APMC (Gultekdi)", "MH-PUN-02", 18.5204, 73.8567),
+            (str(uuid.uuid4()), "Andhra Pradesh", "Main District", "Andhra Pradesh Main APMC", "AN-00", 0.0, 0.0),
+            (str(uuid.uuid4()), "Arunachal Pradesh", "Main District", "Arunachal Pradesh Main APMC", "AR-01", 0.0, 0.0),
+            (str(uuid.uuid4()), "Assam", "Main District", "Assam Main APMC", "AS-02", 0.0, 0.0),
+            (str(uuid.uuid4()), "Bihar", "Main District", "Bihar Main APMC", "BI-03", 0.0, 0.0),
+            (str(uuid.uuid4()), "Chhattisgarh", "Main District", "Chhattisgarh Main APMC", "CH-04", 0.0, 0.0),
+            (str(uuid.uuid4()), "Goa", "Main District", "Goa Main APMC", "GO-05", 0.0, 0.0),
+            (str(uuid.uuid4()), "Gujarat", "Main District", "Gujarat Main APMC", "GU-06", 0.0, 0.0),
+            (str(uuid.uuid4()), "Haryana", "Main District", "Haryana Main APMC", "HA-07", 0.0, 0.0),
+            (str(uuid.uuid4()), "Himachal Pradesh", "Main District", "Himachal Pradesh Main APMC", "HI-08", 0.0, 0.0),
+            (str(uuid.uuid4()), "Jharkhand", "Main District", "Jharkhand Main APMC", "JH-09", 0.0, 0.0),
+            (str(uuid.uuid4()), "Kerala", "Main District", "Kerala Main APMC", "KE-11", 0.0, 0.0),
+            (str(uuid.uuid4()), "Manipur", "Main District", "Manipur Main APMC", "MA-14", 0.0, 0.0),
+            (str(uuid.uuid4()), "Meghalaya", "Main District", "Meghalaya Main APMC", "ME-15", 0.0, 0.0),
+            (str(uuid.uuid4()), "Mizoram", "Main District", "Mizoram Main APMC", "MI-16", 0.0, 0.0),
+            (str(uuid.uuid4()), "Nagaland", "Main District", "Nagaland Main APMC", "NA-17", 0.0, 0.0),
+            (str(uuid.uuid4()), "Odisha", "Main District", "Odisha Main APMC", "OD-18", 0.0, 0.0),
+            (str(uuid.uuid4()), "Punjab", "Main District", "Punjab Main APMC", "PU-19", 0.0, 0.0),
+            (str(uuid.uuid4()), "Rajasthan", "Main District", "Rajasthan Main APMC", "RA-20", 0.0, 0.0),
+            (str(uuid.uuid4()), "Sikkim", "Main District", "Sikkim Main APMC", "SI-21", 0.0, 0.0),
+            (str(uuid.uuid4()), "Tamil Nadu", "Main District", "Tamil Nadu Main APMC", "TA-22", 0.0, 0.0),
+            (str(uuid.uuid4()), "Telangana", "Main District", "Telangana Main APMC", "TE-23", 0.0, 0.0),
+            (str(uuid.uuid4()), "Tripura", "Main District", "Tripura Main APMC", "TR-24", 0.0, 0.0),
+            (str(uuid.uuid4()), "Uttar Pradesh", "Main District", "Uttar Pradesh Main APMC", "UT-25", 0.0, 0.0),
+            (str(uuid.uuid4()), "Uttarakhand", "Main District", "Uttarakhand Main APMC", "UT-26", 0.0, 0.0),
+            (str(uuid.uuid4()), "West Bengal", "Main District", "West Bengal Main APMC", "WE-27", 0.0, 0.0)
         ]
         
         cursor.executemany("""

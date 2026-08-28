@@ -185,7 +185,7 @@ def generate_chatbot_response(query_text: str, db: sqlite3.Connection) -> str:
         )
         
     elif intent == "weather":
-        location = parsed.get("district") or "Shivamogga"
+        location = parsed.get("district") or parsed.get("state") or "Shivamogga"
         return texts["weather_template"].format(location=location)
         
     elif intent == "scheme":
@@ -657,6 +657,32 @@ def process_voice_query():
         return jsonify({"detail": str(e)}), 500
     finally:
         conn.close()
+
+@app.route("/api/debug", methods=["GET"])
+def debug_env():
+    gemini_key = os.environ.get("GEMINI_API_KEY")
+    datagov_key = os.environ.get("DATAGOV_API_KEY")
+    
+    status = {
+        "gemini_key_present": bool(gemini_key),
+        "datagov_key_present": bool(datagov_key),
+        "gemini_key_prefix": gemini_key[:4] if gemini_key else None,
+        "gemini_api_test": "Not Tested"
+    }
+    
+    if gemini_key:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
+            headers = {"Content-Type": "application/json"}
+            payload = {"contents": [{"parts": [{"text": "Hello"}]}]}
+            response = requests.post(url, headers=headers, json=payload, timeout=5)
+            status["gemini_api_test"] = f"Status: {response.status_code}"
+            if response.status_code != 200:
+                status["gemini_error"] = response.text[:200]
+        except Exception as e:
+            status["gemini_api_test"] = f"Error: {str(e)}"
+            
+    return jsonify(status)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)

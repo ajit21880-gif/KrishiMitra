@@ -109,7 +109,8 @@ const TRANSLATIONS = {
     offline_mode: "ಆಫ್‌ಲೈನ್ ಮೋಡ್ (ಹಳೆಯ ಬೆಲೆ ಲಭ್ಯವಿದೆ)",
     last_updated: "ಕೊನೆಯದಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ",
     no_records: "ಯಾವುದೇ ದರ ಪಟ್ಟಿ ಲಭ್ಯವಿಲ್ಲ. ಬೇರೆ ಮಾರುಕಟ್ಟೆ ಅಥವಾ ಬೆಳೆ ಆರಿಸಿ.",
-    msp: "ಬೆಂಬಲ ಬೆಲೆ (MSP)"
+    msp: "ಬೆಂಬಲ ಬೆಲೆ (MSP)",
+    greeting: "ನಮಸ್ಕಾರ! ನಿಮ್ಮ ಕೃಷಿ ಸಂಬಂಧಿತ ಪ್ರಶ್ನೆಗಳಿಗೆ ನಾನು ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?"
   }
 };
 
@@ -167,14 +168,14 @@ export default function Home() {
   const recognitionRef = useRef<any>(null);
   const [inputText, setInputText] = useState("");
   const [chatLog, setChatLog] = useState<Array<{ sender: "user" | "bot"; text: string }>>([
-    { sender: "bot", text: TRANSLATIONS[lang].greeting }
+    { sender: "bot", text: getTranslation(lang).greeting }
   ]);
 
   // WhatsApp simulation states
   const [waText, setWaText] = useState("");
   const [isWaListening, setIsWaListening] = useState(false);
   const [waLog, setWaLog] = useState<Array<{ sender: "user" | "bot"; text: string; time: string }>>([
-    { sender: "bot", text: TRANSLATIONS[lang].greeting, time: "12:00 PM" }
+    { sender: "bot", text: getTranslation(lang).greeting, time: "12:00 PM" }
   ]);
 
   // Trigger TTS voice synthesis
@@ -198,10 +199,10 @@ export default function Home() {
   // Sync default greetings when language changes
   useEffect(() => {
     setChatLog([
-      { sender: "bot", text: TRANSLATIONS[lang].greeting }
+      { sender: "bot", text: getTranslation(lang).greeting }
     ]);
     setWaLog([
-      { sender: "bot", text: TRANSLATIONS[lang].greeting, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+      { sender: "bot", text: getTranslation(lang).greeting, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
     ]);
   }, [lang]);
 

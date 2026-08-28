@@ -109,21 +109,24 @@ class AIService:
             headers = {"Content-Type": "application/json"}
             
             prompt = f"""
-            You are a smart AI agricultural assistant parsing query texts from Indian farmers.
-            Analyze the following text and extract details as JSON.
+            You are a smart AI agricultural assistant. A farmer has asked you a query in English, Hindi, or Kannada.
             
-            Valid intents: "price" (mandi rates), "msp" (minimum support price), "buyer" (find verified buyers to sell), "dealer" (find input fertilizer/seed dealers), "weather" (weather forecasts), "scheme" (govt schemes).
-            Supported commodities: "Maize", "Wheat", "Paddy (Rice)", "Soyabean", "Onion", "Tomato". Map synonyms accordingly.
-            States & Districts should be standardized (e.g. State: "Karnataka", District: "Shivamogga" or "Davanagere"; State: "Madhya Pradesh", District: "Indore").
-            Language code should be "en", "hi", or "kn".
+            First, check if the query is asking about one of these core app features: "price" (mandi rates), "msp" (minimum support price), "buyer" (find verified buyers to sell), "dealer" (find input fertilizer/seed dealers), "weather" (weather forecasts), "scheme" (govt schemes).
+            If it is a core feature, extract the details.
+            - Supported commodities: "Maize", "Wheat", "Paddy (Rice)", "Soyabean", "Onion", "Tomato". Map synonyms accordingly.
+            - States & Districts should be standardized (e.g. State: "Karnataka", District: "Shivamogga"; State: "Maharashtra", District: "Pune").
             
+            If the query is a general farming question, agronomy advice, greeting, or anything outside those core features, set the intent to "general".
+            When intent is "general", you must also provide a helpful, expert response in the exact same language the user used (en, hi, or kn) in the "general_answer" field.
+
             Output format MUST be strictly JSON (no markdown formatting, no explanation):
             {{
-                "intent": "price" | "msp" | "buyer" | "dealer" | "weather" | "scheme",
+                "intent": "price" | "msp" | "buyer" | "dealer" | "weather" | "scheme" | "general",
                 "commodity": "Maize" | "Wheat" | "Paddy (Rice)" | "Soyabean" | "Onion" | "Tomato" | null,
                 "state": "State Name" | null,
                 "district": "District Name" | null,
                 "language": "en" | "hi" | "kn",
+                "general_answer": "Expert response to the user's general query in their language" | null,
                 "raw_query": "original input text"
             }}
             

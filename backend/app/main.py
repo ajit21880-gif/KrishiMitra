@@ -195,6 +195,9 @@ def generate_chatbot_response(query_text: str, db: sqlite3.Connection) -> str:
     elif intent == "scheme":
         return texts["scheme_template"]
         
+    elif intent == "general":
+        return parsed.get("general_answer", texts["greeting"])
+        
     return texts["greeting"]
 
 @app.route("/", methods=["GET"])

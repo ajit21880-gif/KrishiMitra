@@ -447,6 +447,71 @@ def get_dealers():
     conn.close()
     return jsonify(dealers)
 
+@app.route("/api/marketplace/inventory/<dealer_id>", methods=["GET"])
+def get_dealer_inventory(dealer_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM dealer_inventory WHERE dealer_id = ?", (dealer_id,))
+    rows = cursor.fetchall()
+    inventory = [dict(row) for row in rows]
+    conn.close()
+    return jsonify(inventory)
+
+@app.route("/api/marketplace/reserve", methods=["POST"])
+def reserve_inventory():
+    data = request.json
+    dealer_id = data.get("dealer_id")
+    inventory_id = data.get("inventory_id")
+    quantity = data.get("quantity")
+    farmer_phone = data.get("farmer_phone")
+    
+    if not all([dealer_id, inventory_id, quantity, farmer_phone]):
+        return jsonify({"error": "Missing required fields"}), 400
+        
+    try:
+        quantity = int(quantity)
+    except ValueError:
+        return jsonify({"error": "Invalid quantity"}), 400
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Check stock
+    cursor.execute("SELECT stock_quantity, item_name, unit FROM dealer_inventory WHERE id = ?", (inventory_id,))
+    item = cursor.fetchone()
+    if not item:
+        conn.close()
+        return jsonify({"error": "Item not found"}), 404
+        
+    stock = item["stock_quantity"]
+    if quantity > stock:
+        conn.close()
+        return jsonify({"error": f"Only {stock} {item['unit']} available"}), 400
+        
+    # Generate 4-digit PIN
+    import random
+    pin_code = str(random.randint(1000, 9999))
+    reservation_id = str(uuid.uuid4())
+    
+    # Update stock
+    cursor.execute("UPDATE dealer_inventory SET stock_quantity = stock_quantity - ? WHERE id = ?", (quantity, inventory_id))
+    
+    # Create reservation
+    cursor.execute("""
+    INSERT INTO reservations (id, dealer_id, inventory_id, farmer_phone, quantity, pin_code, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (reservation_id, dealer_id, inventory_id, farmer_phone, quantity, pin_code, 'PENDING'))
+    
+    conn.commit()
+    conn.close()
+    
+    return jsonify({
+        "success": True, 
+        "reservation_id": reservation_id, 
+        "pin_code": pin_code,
+        "message": f"Successfully reserved {quantity} {item['unit']} of {item['item_name']}. Please show PIN {pin_code} to the dealer to collect."
+    })
+
 # =======================
 # WhatsApp Endpoints
 # =======================

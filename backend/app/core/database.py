@@ -99,6 +99,35 @@ def init_db():
         verified INTEGER DEFAULT 0
     )
     """)
+    # Create dealer_inventory table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS dealer_inventory (
+        id TEXT PRIMARY KEY,
+        dealer_id TEXT,
+        item_name TEXT,
+        category TEXT,
+        price REAL,
+        stock_quantity INTEGER,
+        unit TEXT,
+        FOREIGN KEY (dealer_id) REFERENCES dealers (id)
+    )
+    """)
+
+    # Create reservations table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS reservations (
+        id TEXT PRIMARY KEY,
+        dealer_id TEXT,
+        inventory_id TEXT,
+        farmer_phone TEXT,
+        quantity INTEGER,
+        pin_code TEXT,
+        status TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (dealer_id) REFERENCES dealers (id),
+        FOREIGN KEY (inventory_id) REFERENCES dealer_inventory (id)
+    )
+    """)
     
     conn.commit()
     conn.close()

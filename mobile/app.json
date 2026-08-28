@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "5793406f-d1ec-41b7-a8b6-db433488de39"
+      }
+    },
+    "android": {
+      "package": "com.ajisa22.krishimitramobile"
+    }
+  }
+}

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { 
   Mic, MicOff, Search, PhoneCall, TrendingUp, Store, 
   MapPin, Radio, MessageCircle, ArrowRight, UserCheck, 
-  Volume2, CloudSun, BookOpen, Send
+  Volume2, CloudSun, BookOpen, Send, CheckCircle, X
 } from "lucide-react";
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
@@ -162,6 +162,12 @@ export default function Home() {
   const [dealers, setDealers] = useState<any[]>([]);
   const [marketCommodityFilter, setMarketCommodityFilter] = useState("");
   const [marketDistrictFilter, setMarketDistrictFilter] = useState("");
+  
+  // Reservation states
+  const [selectedDealerForReservation, setSelectedDealerForReservation] = useState<any>(null);
+  const [dealerInventory, setDealerInventory] = useState<any[]>([]);
+  const [reservationSuccess, setReservationSuccess] = useState<any>(null);
+  const [reservationPhone, setReservationPhone] = useState("");
 
   // Assistant states
   const [isListening, setIsListening] = useState(false);
@@ -279,6 +285,51 @@ export default function Home() {
       }
     }
   }, [states, commodities]);
+
+  const openReservationModal = (dealer: any) => {
+    setSelectedDealerForReservation(dealer);
+    setReservationSuccess(null);
+    setReservationPhone("");
+    setDealerInventory([]);
+    
+    // Fetch inventory
+    fetch(`${BACKEND_URL}/api/marketplace/inventory/${dealer.id}`)
+      .then(res => res.json())
+      .then(data => {
+        // add quantity state to each item
+        setDealerInventory(data.map((item: any) => ({ ...item, reserveQty: 1 })));
+      })
+      .catch(err => console.error("Error fetching inventory", err));
+  };
+
+  const handleReserve = (inventoryId: string, reserveQty: number) => {
+    if (!reservationPhone || reservationPhone.length < 10) {
+      alert("Please enter a valid phone number.");
+      return;
+    }
+    
+    fetch(`${BACKEND_URL}/api/marketplace/reserve`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        dealer_id: selectedDealerForReservation.id,
+        inventory_id: inventoryId,
+        quantity: reserveQty,
+        farmer_phone: reservationPhone
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setReservationSuccess(data);
+          // Refresh inventory after booking
+          openReservationModal(selectedDealerForReservation);
+        } else {
+          alert(data.error || "Reservation failed.");
+        }
+      })
+      .catch(err => alert("Error reserving inventory."));
+  };
 
   const loadMarketplace = (comm = "", dist = "") => {
     fetch(`${BACKEND_URL}/api/marketplace/buyers?commodity=${comm}&district=${dist}`)
@@ -908,6 +959,13 @@ export default function Home() {
                         Pesticides
                       </span>
                     </div>
+                    
+                    <button 
+                      onClick={() => openReservationModal(d)}
+                      className="mt-3 w-full bg-primary-100 text-primary-800 text-xs font-bold py-2 rounded-lg border border-primary-200 hover:bg-primary-200 transition-colors"
+                    >
+                      Check Stock & Reserve
+                    </button>
                   </div>
                 ))}
               </div>
@@ -1023,6 +1081,116 @@ export default function Home() {
           {t.tab_whatsapp}
         </button>
       </footer>
+
+      {/* Reservation Modal Overlay */}
+      {selectedDealerForReservation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto flex flex-col">
+            
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white">
+              <h3 className="font-bold text-gray-900">Reserve at {selectedDealerForReservation.shop_name}</h3>
+              <button 
+                onClick={() => setSelectedDealerForReservation(null)}
+                className="text-gray-400 hover:text-gray-800"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-4 flex-1">
+              {reservationSuccess ? (
+                <div className="bg-green-50 text-green-800 p-6 rounded-lg text-center border border-green-200">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle size={32} className="text-green-600" />
+                  </div>
+                  <h4 className="font-bold text-lg mb-2">Reservation Confirmed!</h4>
+                  <p className="text-sm mb-4">{reservationSuccess.message}</p>
+                  <div className="bg-white border-2 border-dashed border-green-300 p-4 rounded-lg">
+                    <p className="text-xs text-green-600 font-bold uppercase tracking-wider mb-1">Your Pickup PIN</p>
+                    <p className="text-4xl font-black text-green-700 tracking-widest">{reservationSuccess.pin_code}</p>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedDealerForReservation(null)}
+                    className="mt-6 w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700"
+                  >
+                    Done
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Your Phone Number</label>
+                    <input 
+                      type="tel"
+                      value={reservationPhone}
+                      onChange={e => setReservationPhone(e.target.value)}
+                      placeholder="e.g. 9876543210"
+                      className="w-full border border-gray-300 rounded-lg p-2 text-sm text-gray-900 focus:outline-none focus:border-primary-500"
+                    />
+                    <p className="text-[10px] text-gray-500 mt-1">We need this to reserve your stock securely.</p>
+                  </div>
+
+                  <h4 className="font-bold text-sm text-gray-800 border-b pb-2 mb-3">Available Inventory</h4>
+                  
+                  {dealerInventory.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4">No inventory items found.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {dealerInventory.map(item => (
+                        <div key={item.id} className="border border-gray-100 p-3 rounded-lg flex flex-col gap-2 shadow-sm">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h5 className="font-bold text-sm text-gray-900">{item.item_name}</h5>
+                              <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-bold">{item.category}</span>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-primary-700">₹{item.price}</p>
+                              <p className="text-[10px] text-gray-500">per {item.unit.replace(/s$/, "")}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-orange-50 border border-orange-100 rounded px-2 py-1 flex items-center justify-between mt-1">
+                            <span className="text-[11px] text-orange-800 font-bold">In Stock: {item.stock_quantity} {item.unit}</span>
+                          </div>
+
+                          {item.stock_quantity > 0 ? (
+                            <div className="flex items-center gap-2 mt-2">
+                              <input 
+                                type="number" 
+                                min="1" 
+                                max={item.stock_quantity}
+                                value={item.reserveQty}
+                                onChange={e => {
+                                  const val = parseInt(e.target.value) || 1;
+                                  setDealerInventory(prev => prev.map(inv => 
+                                    inv.id === item.id ? { ...inv, reserveQty: val > item.stock_quantity ? item.stock_quantity : val } : inv
+                                  ));
+                                }}
+                                className="w-16 border border-gray-300 rounded p-1.5 text-sm text-center focus:outline-none focus:border-primary-500"
+                              />
+                              <span className="text-xs text-gray-500">{item.unit}</span>
+                              <button 
+                                onClick={() => handleReserve(item.id, item.reserveQty)}
+                                className="ml-auto bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold py-2 px-4 rounded transition-colors"
+                              >
+                                Reserve
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="mt-2 text-center py-2 bg-gray-50 text-gray-500 text-xs font-bold rounded">
+                              Out of Stock
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

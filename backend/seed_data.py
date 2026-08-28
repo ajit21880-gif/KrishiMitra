@@ -138,20 +138,54 @@ def seed_database():
         """, buyers_data)
         
         print("Seeding Fertilizer & Input Dealers...")
+        # Predetermine IDs so we can link inventory
+        dealer_ids = [str(uuid.uuid4()) for _ in range(7)]
+        
         dealers_data = [
-            (str(uuid.uuid4()), "Sri Manjunatha Fertilizer Agencies", 1, 1, 1, "Shivamogga", 1),
-            (str(uuid.uuid4()), "Shimoga Krishi Kendra", 1, 1, 0, "Shivamogga", 1),
-            (str(uuid.uuid4()), "Davanagere Seed & Fertilizer Depot", 1, 1, 1, "Davanagere", 1),
-            (str(uuid.uuid4()), "Indore Krishi Vikas Seva", 1, 1, 1, "Indore", 1),
-            (str(uuid.uuid4()), "Ujjain Kisan Bazaar", 1, 0, 1, "Ujjain", 1),
-            (str(uuid.uuid4()), "Lasalgaon Seed House", 0, 1, 1, "Lasalgaon", 1),
-            (str(uuid.uuid4()), "Bengaluru Seed Corp", 1, 1, 1, "Bengaluru", 1)
+            (dealer_ids[0], "Sri Manjunatha Fertilizer Agencies", 1, 1, 1, "Shivamogga", 1),
+            (dealer_ids[1], "Shimoga Krishi Kendra", 1, 1, 0, "Shivamogga", 1),
+            (dealer_ids[2], "Davanagere Seed & Fertilizer Depot", 1, 1, 1, "Davanagere", 1),
+            (dealer_ids[3], "Indore Krishi Vikas Seva", 1, 1, 1, "Indore", 1),
+            (dealer_ids[4], "Ujjain Kisan Bazaar", 1, 0, 1, "Ujjain", 1),
+            (dealer_ids[5], "Lasalgaon Seed House", 0, 1, 1, "Lasalgaon", 1),
+            (dealer_ids[6], "Bengaluru Seed Corp", 1, 1, 1, "Bengaluru", 1)
         ]
         
         cursor.executemany("""
         INSERT INTO dealers (id, shop_name, fertilizer, seed, pesticide, location, verified)
         VALUES (?, ?, ?, ?, ?, ?, ?)
         """, dealers_data)
+        
+        # Seed Dealer Inventory
+        print("Seeding Dealer Inventory...")
+        inventory_data = [
+            # Manjunatha (Shivamogga)
+            (str(uuid.uuid4()), dealer_ids[0], "Urea (50kg)", "Fertilizer", 266.50, 120, "bags"),
+            (str(uuid.uuid4()), dealer_ids[0], "DAP (50kg)", "Fertilizer", 1350.00, 45, "bags"),
+            (str(uuid.uuid4()), dealer_ids[0], "Pioneer Maize Seeds", "Seed", 850.00, 30, "packets"),
+            # Shimoga Krishi (Shivamogga)
+            (str(uuid.uuid4()), dealer_ids[1], "Urea (50kg)", "Fertilizer", 266.50, 80, "bags"),
+            (str(uuid.uuid4()), dealer_ids[1], "Tomato Seeds (Hybrid)", "Seed", 300.00, 50, "packets"),
+            # Davanagere Depot
+            (str(uuid.uuid4()), dealer_ids[2], "DAP (50kg)", "Fertilizer", 1350.00, 20, "bags"),
+            (str(uuid.uuid4()), dealer_ids[2], "Kaveri Cotton Seeds", "Seed", 750.00, 60, "packets"),
+            # Indore
+            (str(uuid.uuid4()), dealer_ids[3], "Urea (50kg)", "Fertilizer", 266.50, 200, "bags"),
+            (str(uuid.uuid4()), dealer_ids[3], "Wheat Seeds (Lok-1)", "Seed", 1200.00, 40, "bags"),
+            # Ujjain
+            (str(uuid.uuid4()), dealer_ids[4], "Soyabean Seeds (JS 9560)", "Seed", 2100.00, 15, "bags"),
+            # Lasalgaon
+            (str(uuid.uuid4()), dealer_ids[5], "Onion Seeds (N-53)", "Seed", 400.00, 100, "packets"),
+            # Bengaluru
+            (str(uuid.uuid4()), dealer_ids[6], "Urea (50kg)", "Fertilizer", 266.50, 150, "bags"),
+            (str(uuid.uuid4()), dealer_ids[6], "Toor Dal Seeds", "Seed", 950.00, 25, "packets"),
+            (str(uuid.uuid4()), dealer_ids[6], "MOP (50kg)", "Fertilizer", 1700.00, 30, "bags")
+        ]
+        
+        cursor.executemany("""
+        INSERT INTO dealer_inventory (id, dealer_id, item_name, category, price, stock_quantity, unit)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, inventory_data)
         
         conn.commit()
         print("Database seeded successfully with sqlite3!")

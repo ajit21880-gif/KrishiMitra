@@ -101,13 +101,9 @@ def generate_chatbot_response(query_text: str, db: sqlite3.Connection) -> str:
             # Fallback to search state
             cursor.execute("SELECT * FROM mandis WHERE state LIKE ? LIMIT 1", (f"%{district}%",))
             mandi = cursor.fetchone()
-            if not mandi:
-                # Get any mandi in DB
-                cursor.execute("SELECT * FROM mandis LIMIT 1")
-                mandi = cursor.fetchone()
                 
         mandi_name = mandi["mandi_name"] if mandi else district
-        state_name = mandi["state"] if mandi else "Karnataka"
+        state_name = mandi["state"] if mandi else (parsed.get("state") or district)
         
         price_info = MandiService.get_mandi_price(db, state_name, district, mandi_name, commodity)
         

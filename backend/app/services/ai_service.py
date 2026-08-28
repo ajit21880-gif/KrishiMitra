@@ -105,7 +105,7 @@ class AIService:
     def parse_query_with_llm(text: str, api_key: str) -> Optional[Dict[str, Any]]:
         """Call Gemini API for robust NLP parsing of agricultural queries"""
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={api_key}"
             headers = {"Content-Type": "application/json"}
             
             prompt = f"""

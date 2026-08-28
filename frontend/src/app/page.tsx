@@ -556,57 +556,58 @@ export default function Home() {
     const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     setWaLog(prev => [...prev, { sender: "user", text: "🎙️ Sending voice note...", time: timeNow }]);
     
-    setTimeout(async () => {
-      setIsWaListening(false);
-      
-      const transcripts: Record<string, string> = {
-        en: "Hi what is the price of wheat in Indore",
-        hi: "इंदौर में गेहूं का भाव क्या है",
-        kn: "ಶಿವಮೊಗ್ಗದಲ್ಲಿ ಮೆಕ್ಕೆಜೋಳದ ರೇಟ್ ಎಷ್ಟು"
-      };
-      
-      const queryText = transcripts[lang] || transcripts["en"];
-      
-      setWaLog(prev => {
-        const updated = [...prev];
-        if (updated.length > 0) {
-          updated[updated.length - 1] = {
-            sender: "user",
-            text: `🎤 Voice note: "${queryText}"`,
-            time: timeNow
-          };
-        }
-        return updated;
-      });
-
-      try {
-        const formData = new URLSearchParams();
-        formData.append("From", "whatsapp:+919876543210");
-        formData.append("Body", queryText);
-        formData.append("NumMedia", "1");
+    
+      // Real Browser Speech Recognition
+      const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.lang = lang === "hi" ? "hi-IN" : lang === "kn" ? "kn-IN" : "en-IN";
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
         
-        await fetch(`${BACKEND_URL}/api/whatsapp/twilio`, {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: formData
-        });
+        recognition.onresult = async (event: any) => {
+          setIsWaListening(false);
+          const queryText = event.results[0][0].transcript;
+          
+          setWaLog(prev => {
+            const updated = [...prev];
+            if (updated.length > 0) {
+              updated[updated.length - 1] = {
+                sender: "user",
+                text: `🎤 Voice note: "${queryText}"`,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              };
+            }
+            return updated;
+          });
+          
+          try {
+            const formData = new URLSearchParams();
+            formData.append("From", "whatsapp:+919876543210");
+            formData.append("Body", queryText);
+            formData.append("NumMedia", "0");
+            
+            await fetch(`${BACKEND_URL}/api/whatsapp/twilio`, {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: formData
+            });
+          } catch (e) {
+            console.error(e);
+          }
+        };
         
-        const parseResponse = await fetch(`${BACKEND_URL}/api/query`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: queryText })
-        });
-        const data = await parseResponse.json();
+        recognition.onerror = () => {
+          setIsWaListening(false);
+          setWaLog(prev => [...prev, { sender: "bot", text: "Microphone error or no speech detected.", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+        };
         
-        setTimeout(() => {
-          setWaLog(prev => [...prev, { sender: "bot", text: data.text, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
-        }, 700);
-      } catch (err) {
-        setTimeout(() => {
-          setWaLog(prev => [...prev, { sender: "bot", text: `[Simulated Bot Audio Reply] Live wheat price in Indore is ₹2,540/quintal.`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
-        }, 700);
+        recognition.start();
+      } else {
+        setIsWaListening(false);
+        setWaLog(prev => [...prev, { sender: "bot", text: "Speech Recognition API not supported in this browser.", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
       }
-    }, 2000);
+
   };
 
   return (

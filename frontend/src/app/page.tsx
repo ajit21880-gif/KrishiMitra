@@ -187,7 +187,7 @@ export default function Home() {
   ]);
 
   // Trigger TTS voice synthesis
-  const speakText = (text: str) => {
+  const speakText = (text: string) => {
     if ("speechSynthesis" in window) {
       // Cancel active voice first
       window.speechSynthesis.cancel();

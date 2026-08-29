@@ -642,7 +642,7 @@ export default function Home() {
       <header className="bg-primary-600 text-white p-4 flex flex-col items-center justify-between shadow">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2">
-            <Radio className="animate-pulse text-green-200" size={24} />
+            <img src="/logo.png" className="w-8 h-8 rounded-full border border-green-200 bg-white" alt="logo" />
             <div>
               <h1 className="font-extrabold text-xl tracking-tight">{t.app_title}</h1>
               <p className="text-xs text-green-100">{t.tagline}</p>
@@ -1111,6 +1111,9 @@ export default function Home() {
           {t.tab_whatsapp}
         </button>
       </footer>
+      <div className="bg-gray-100 text-[9px] text-gray-400 text-center py-1 border-t border-gray-200">
+        © 2026 Crestsubarn Company. All rights reserved.
+      </div>
 
       {/* Reservation Modal Overlay */}
       {selectedDealerForReservation && (

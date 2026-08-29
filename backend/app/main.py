@@ -673,13 +673,18 @@ def debug_env():
     
     if gemini_key:
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
-            headers = {"Content-Type": "application/json"}
-            payload = {"contents": [{"parts": [{"text": "Hello"}]}]}
-            response = requests.post(url, headers=headers, json=payload, timeout=5)
-            status["gemini_api_test"] = f"Status: {response.status_code}"
-            if response.status_code != 200:
-                status["gemini_error"] = response.text[:200]
+            urls = [
+                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}",
+                f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={gemini_key}",
+                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={gemini_key}"
+            ]
+            status["gemini_api_tests"] = {}
+            for i, url in enumerate(urls):
+                headers = {"Content-Type": "application/json"}
+                payload = {"contents": [{"parts": [{"text": "Hello"}]}]}
+                response = requests.post(url, headers=headers, json=payload, timeout=5)
+                status["gemini_api_tests"][f"url_{i}"] = f"Status: {response.status_code}, Body: {response.text[:200]}"
+                
         except Exception as e:
             status["gemini_api_test"] = f"Error: {str(e)}"
             

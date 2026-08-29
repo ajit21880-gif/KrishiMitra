@@ -11,6 +11,9 @@
     "android": {
       "package": "com.ajisa22.krishimitramobile",
       "minSdkVersion": 24,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./icon.png",
         "backgroundColor": "#ffffff"

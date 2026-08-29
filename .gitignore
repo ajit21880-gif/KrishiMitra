@@ -51,3 +51,8 @@ Thumbs.db
 .idea/
 mobile/node_modules/
 **/node_modules/
+
+# Mobile native folders
+mobile/android/
+mobile/ios/
+mobile/.expo/

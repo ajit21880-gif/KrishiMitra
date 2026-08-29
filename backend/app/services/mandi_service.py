@@ -37,24 +37,46 @@ class MandiService:
                 "format": "json",
                 "filters[state]": state,
                 "filters[district]": district,
-                "filters[market]": mandi_name,
                 "filters[commodity]": commodity,
-                "limit": 1
+                "limit": 50
             }
             
             response = requests.get(url, params=params, timeout=10)
             if response.status_code == 200:
                 data = response.json()
                 records = data.get("records", [])
-                if records:
-                    record = records[0]
+                
+                # Find the best matching market in the records
+                best_record = None
+                
+                # 1. Exact Match
+                for record in records:
+                    market_name_gov = record.get("market", "").strip().lower()
+                    if market_name_gov == mandi_name.strip().lower():
+                        best_record = record
+                        break
+                        
+                # 2. Fuzzy/Partial Match
+                if not best_record:
+                    clean_mandi_name = mandi_name.lower().replace("apmc", "").replace("market", "").strip()
+                    for record in records:
+                        market_name_gov = record.get("market", "").lower().replace("apmc", "").replace("market", "").strip()
+                        if clean_mandi_name in market_name_gov or market_name_gov in clean_mandi_name:
+                            best_record = record
+                            break
+                            
+                # 3. Fallback to any market in same district
+                if not best_record and records:
+                    best_record = records[0]
+                    
+                if best_record:
                     result = {
-                        "commodity": record.get("commodity"),
-                        "mandi": record.get("market"),
-                        "date": record.get("arrival_date"),
-                        "min_price": float(record.get("min_price", 0)),
-                        "modal_price": float(record.get("modal_price", 0)),
-                        "max_price": float(record.get("max_price", 0)),
+                        "commodity": best_record.get("commodity"),
+                        "mandi": best_record.get("market"),
+                        "date": best_record.get("arrival_date"),
+                        "min_price": float(best_record.get("min_price", 0)),
+                        "modal_price": float(best_record.get("modal_price", 0)),
+                        "max_price": float(best_record.get("max_price", 0)),
                         "source": "AGMARKNET (data.gov.in Live API)",
                         "last_updated": datetime.now().isoformat()
                     }
@@ -64,7 +86,7 @@ class MandiService:
                 print(f"data.gov.in API returned error {response.status_code}: {response.text}")
         except Exception as e:
             print(f"Error calling data.gov.in API: {e}")
-            
+             
         return None
 
     @classmethod

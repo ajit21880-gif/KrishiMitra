@@ -103,56 +103,67 @@ class AIService:
 
     @staticmethod
     def parse_query_with_llm(text: str, api_key: str) -> Optional[Dict[str, Any]]:
-        """Call Gemini API for robust NLP parsing of agricultural queries"""
-        try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={api_key}"
-            headers = {"Content-Type": "application/json"}
-            
-            prompt = f"""
-            You are a smart AI agricultural assistant. A farmer has asked you a query in English, Hindi, or Kannada.
-            
-            First, check if the query is asking about one of these core app features: "price" (mandi rates), "msp" (minimum support price), "buyer" (find verified buyers to sell), "dealer" (find input fertilizer/seed dealers), "weather" (weather forecasts), "scheme" (govt schemes).
-            If it is a core feature, extract the details.
-            - Supported commodities: "Maize", "Wheat", "Paddy (Rice)", "Soyabean", "Onion", "Tomato". Map synonyms accordingly.
-            - States & Districts should be standardized (e.g. State: "Karnataka", District: "Shivamogga"; State: "Maharashtra", District: "Pune").
-            
-            If the query is a general farming question, agronomy advice, greeting, or anything outside those core features, set the intent to "general".
-            When intent is "general", you must also provide a helpful, expert response in the exact same language the user used (en, hi, or kn) in the "general_answer" field.
+        """Call Gemini API for robust NLP parsing of agricultural queries, rotating models on 429 errors"""
+        prompt = f"""
+        You are a smart AI agricultural assistant. A farmer has asked you a query in English, Hindi, or Kannada.
+        
+        First, check if the query is asking about one of these core app features: "price" (mandi rates), "msp" (minimum support price), "buyer" (find verified buyers to sell), "dealer" (find input fertilizer/seed dealers), "weather" (weather forecasts), "scheme" (govt schemes).
+        If it is a core feature, extract the details.
+        - Supported commodities: "Maize", "Wheat", "Paddy (Rice)", "Soyabean", "Onion", "Tomato". Map synonyms accordingly.
+        - States & Districts should be standardized (e.g. State: "Karnataka", District: "Shivamogga"; State: "Maharashtra", District: "Pune").
+        
+        If the query is a general farming question, agronomy advice, greeting, or anything outside those core features, set the intent to "general".
+        When intent is "general", you must also provide a helpful, expert response in the exact same language the user used (en, hi, or kn) in the "general_answer" field.
 
-            Output format MUST be strictly JSON (no markdown formatting, no explanation):
-            {{
-                "intent": "price" | "msp" | "buyer" | "dealer" | "weather" | "scheme" | "general",
-                "commodity": "Maize" | "Wheat" | "Paddy (Rice)" | "Soyabean" | "Onion" | "Tomato" | null,
-                "state": "State Name" | null,
-                "district": "District Name" | null,
-                "language": "en" | "hi" | "kn",
-                "general_answer": "Expert response to the user's general query in their language" | null,
-                "raw_query": "original input text"
-            }}
-            
-            Input Text: "{text}"
-            """
-            
-            payload = {
-                "contents": [{
-                    "parts": [{"text": prompt}]
-                }],
-                "generationConfig": {
-                    "responseMimeType": "application/json"
-                }
+        Output format MUST be strictly JSON (no markdown formatting, no explanation):
+        {{
+            "intent": "price" | "msp" | "buyer" | "dealer" | "weather" | "scheme" | "general",
+            "commodity": "Maize" | "Wheat" | "Paddy (Rice)" | "Soyabean" | "Onion" | "Tomato" | null,
+            "state": "State Name" | null,
+            "district": "District Name" | null,
+            "language": "en" | "hi" | "kn",
+            "general_answer": "Expert response to the user's general query in their language" | null,
+            "raw_query": "original input text"
+        }}
+        
+        Input Text: "{text}"
+        """
+        
+        payload = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }],
+            "generationConfig": {
+                "responseMimeType": "application/json"
             }
-            
-            response = requests.post(url, headers=headers, json=payload, timeout=8)
-            if response.status_code == 200:
-                res_data = response.json()
-                content_text = res_data["candidates"][0]["content"]["parts"][0]["text"]
-                return json.loads(content_text.strip())
-            else:
-                print(f"Gemini API returned error code {response.status_code}: {response.text}")
-                return None
-        except Exception as e:
-            print(f"Error calling Gemini API: {e}")
-            return None
+        }
+        headers = {"Content-Type": "application/json"}
+        
+        # Rotate through multiple available Flash models to bypass the daily rate limit of 20 requests/model
+        models = [
+            "gemini-3.6-flash",
+            "gemini-3.5-flash",
+            "gemini-2.5-flash",
+            "gemini-3.7-flash"
+        ]
+        
+        for model in models:
+            try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+                response = requests.post(url, headers=headers, json=payload, timeout=8)
+                if response.status_code == 200:
+                    res_data = response.json()
+                    content_text = res_data["candidates"][0]["content"]["parts"][0]["text"]
+                    return json.loads(content_text.strip())
+                elif response.status_code == 429:
+                    print(f"Gemini API ({model}) returned 429 (Rate Limit). Rotating to next model...")
+                    continue
+                else:
+                    print(f"Gemini API ({model}) returned error code {response.status_code}: {response.text}")
+            except Exception as e:
+                print(f"Error calling Gemini API ({model}): {e}")
+                
+        return None
 
     @classmethod
     def parse_query(cls, text: str) -> Dict[str, Any]:

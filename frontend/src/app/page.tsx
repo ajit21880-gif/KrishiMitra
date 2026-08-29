@@ -186,6 +186,19 @@ export default function Home() {
     { sender: "bot", text: getTranslation(lang).greeting, time: "12:00 PM" }
   ]);
 
+  // Chat auto-scroll refs
+  const assistantEndRef = useRef<HTMLDivElement>(null);
+  const waEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto scroll when messages are added
+  useEffect(() => {
+    assistantEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatLog]);
+
+  useEffect(() => {
+    waEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [waLog]);
+
   // Trigger TTS voice synthesis
   const speakText = (text: string) => {
     if ("speechSynthesis" in window) {
@@ -592,6 +605,18 @@ export default function Home() {
               headers: { "Content-Type": "application/x-www-form-urlencoded" },
               body: formData
             });
+
+            // Wait a moment and then query the backend to see what it would reply
+            const parseResponse = await fetch(`${BACKEND_URL}/api/query`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ text: queryText })
+            });
+            const data = await parseResponse.json();
+            
+            setTimeout(() => {
+              setWaLog(prev => [...prev, { sender: "bot", text: data.text, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+            }, 700);
           } catch (e) {
             console.error(e);
           }
@@ -659,14 +684,14 @@ export default function Home() {
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 overflow-y-auto p-4 bg-gray-50 pb-20">
+      <main className="flex-1 p-4 bg-gray-50 pb-20 overflow-hidden flex flex-col">
         
         {/* TAB 1: Voice Assistant */}
         {activeTab === "assistant" && (
-          <div className="flex flex-col h-full justify-between gap-4">
+          <div className="flex flex-col flex-1 h-full overflow-hidden gap-4">
             
             {/* Conversation Log */}
-            <div className="flex-1 overflow-y-auto space-y-4 pr-1 min-h-[250px] max-h-[360px]">
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
               {chatLog.map((chat, idx) => (
                 <div 
                   key={idx} 
@@ -701,6 +726,7 @@ export default function Home() {
                   </div>
                 </div>
               ))}
+              <div ref={assistantEndRef} />
             </div>
 
             {/* Voice Controller & Form */}
@@ -742,7 +768,7 @@ export default function Home() {
 
         {/* TAB 2: Mandi Rates */}
         {activeTab === "mandi" && (
-          <div className="space-y-4">
+          <div className="flex-1 overflow-y-auto space-y-4">
             <h2 className="text-lg font-extrabold text-gray-900 border-l-4 border-primary-600 pl-2">{t.mandi_header}</h2>
             
             {/* Selectors */}
@@ -873,7 +899,7 @@ export default function Home() {
 
         {/* TAB 3: Marketplace */}
         {activeTab === "market" && (
-          <div className="space-y-6">
+          <div className="flex-1 overflow-y-auto space-y-6">
             
             {/* Buyers section */}
             <div className="space-y-3">
@@ -978,7 +1004,7 @@ export default function Home() {
 
         {/* TAB 4: WhatsApp Simulator */}
         {activeTab === "whatsapp" && (
-          <div className="flex flex-col h-[480px] bg-[#efeae2] rounded-2xl border border-gray-200 shadow-inner overflow-hidden relative">
+          <div className="flex flex-col flex-1 h-full bg-[#efeae2] rounded-2xl border border-gray-200 shadow-inner overflow-hidden relative">
             
             {/* WhatsApp Simulator Header */}
             <div className="bg-[#075e54] text-white p-3 flex items-center gap-2">
@@ -1010,6 +1036,7 @@ export default function Home() {
                   </div>
                 </div>
               ))}
+              <div ref={waEndRef} />
             </div>
 
             {/* Input bar */}

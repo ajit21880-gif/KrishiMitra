@@ -684,11 +684,11 @@ export default function Home() {
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 p-4 bg-gray-50 pb-20 overflow-hidden flex flex-col">
+      <main className="flex-1 p-4 bg-gray-50 overflow-hidden flex flex-col min-h-0">
         
         {/* TAB 1: Voice Assistant */}
         {activeTab === "assistant" && (
-          <div className="flex flex-col flex-1 h-full overflow-hidden gap-4">
+          <div className="flex flex-col flex-1 h-full min-h-0 overflow-hidden gap-4">
             
             {/* Conversation Log */}
             <div className="flex-1 overflow-y-auto space-y-4 pr-1">
@@ -1004,7 +1004,7 @@ export default function Home() {
 
         {/* TAB 4: WhatsApp Simulator */}
         {activeTab === "whatsapp" && (
-          <div className="flex flex-col flex-1 h-full bg-[#efeae2] rounded-2xl border border-gray-200 shadow-inner overflow-hidden relative">
+          <div className="flex flex-col flex-1 h-full min-h-0 bg-[#efeae2] rounded-2xl border border-gray-200 shadow-inner overflow-hidden relative">
             
             {/* WhatsApp Simulator Header */}
             <div className="bg-[#075e54] text-white p-3 flex items-center gap-2">
@@ -1073,7 +1073,7 @@ export default function Home() {
       </main>
 
       {/* Footer Navigation Bar */}
-      <footer className="absolute bottom-0 w-full bg-white border-t border-gray-200 grid grid-cols-4 text-center z-10">
+      <footer className="bg-white border-t border-gray-200 grid grid-cols-4 text-center z-10 py-1">
         <button 
           onClick={() => setActiveTab("assistant")}
           className={`flex flex-col items-center py-2 text-xs font-bold gap-1 ${

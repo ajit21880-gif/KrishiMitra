@@ -2,6 +2,7 @@
   "expo": {
     "name": "krishimitra-mobile",
     "slug": "krishimitra-mobile",
+    "icon": "./icon.png",
     "extra": {
       "eas": {
         "projectId": "5793406f-d1ec-41b7-a8b6-db433488de39"
@@ -9,7 +10,11 @@
     },
     "android": {
       "package": "com.ajisa22.krishimitramobile",
-      "minSdkVersion": 24
+      "minSdkVersion": 24,
+      "adaptiveIcon": {
+        "foregroundImage": "./icon.png",
+        "backgroundColor": "#ffffff"
+      }
     },
     "splash": {
       "backgroundColor": "#ffffff"

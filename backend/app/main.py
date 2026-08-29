@@ -2,6 +2,8 @@ import os
 import sys
 import uuid
 import jwt
+import threading
+import time
 from datetime import datetime, timedelta
 import urllib.parse
 import sqlite3
@@ -19,6 +21,126 @@ from app.services.whatsapp_service import WhatsAppService
 
 # Initialize SQLite tables on startup
 init_db()
+
+def start_background_price_sync():
+    def sync_worker():
+        # Let's wait 10 seconds for Flask to bind first
+        time.sleep(10)
+        while True:
+            api_key = os.environ.get("DATAGOV_API_KEY")
+            if not api_key:
+                print("[Price Syncer] No DATAGOV_API_KEY found, skipping background sync.")
+                time.sleep(3600)
+                continue
+                
+            print("[Price Syncer] Starting background daily price sync from Data.gov...")
+            try:
+                # Query Data.gov in bulk for 1000 latest records
+                url = "https://api.data.gov.in/resource/9ef84281-22f3-497d-aa5d-8c6c52d77290"
+                params = {
+                    "api-key": api_key,
+                    "format": "json",
+                    "limit": 1000
+                }
+                # Use a larger timeout for the slow gov api
+                response = requests.get(url, params=params, timeout=25)
+                if response.status_code == 200:
+                    data = response.json()
+                    records = data.get("records", [])
+                    print(f"[Price Syncer] Successfully fetched {len(records)} records from Data.gov.")
+                    
+                    conn = get_db_connection()
+                    cursor = conn.cursor()
+                    
+                    # Fetch all mandis and commodities from DB
+                    cursor.execute("SELECT id, state, district, mandi_name FROM mandis")
+                    db_mandis = cursor.fetchall()
+                    
+                    cursor.execute("SELECT id, commodity_name FROM commodities")
+                    db_commodities = cursor.fetchall()
+                    
+                    commodity_map = {c["commodity_name"].lower(): c["id"] for c in db_commodities}
+                    
+                    success_count = 0
+                    for r in records:
+                        comm_gov = r.get("commodity", "").strip().lower()
+                        matched_comm_id = None
+                        for c_name, c_id in commodity_map.items():
+                            if c_name in comm_gov or comm_gov in c_name:
+                                matched_comm_id = c_id
+                                break
+                                
+                        if not matched_comm_id:
+                            continue
+                            
+                        state_gov = r.get("state", "").strip().lower()
+                        district_gov = r.get("district", "").strip().lower()
+                        market_gov = r.get("market", "").strip().lower()
+                        
+                        matched_mandi_id = None
+                        for m in db_mandis:
+                            if m["state"].strip().lower() == state_gov:
+                                clean_db_mandi = m["mandi_name"].lower().replace("apmc", "").replace("market", "").strip()
+                                clean_gov_market = market_gov.replace("apmc", "").replace("market", "").strip()
+                                if clean_db_mandi in clean_gov_market or clean_gov_market in clean_db_mandi:
+                                    matched_mandi_id = m["id"]
+                                    break
+                                    
+                        if not matched_mandi_id:
+                            continue
+                            
+                        date_str = r.get("arrival_date", datetime.now().date().isoformat())
+                        
+                        # Clean and parse date string format DD/MM/YYYY to YYYY-MM-DD if needed
+                        if "/" in date_str:
+                            try:
+                                parts = date_str.split("/")
+                                if len(parts) == 3:
+                                    date_str = f"{parts[2]}-{parts[1]}-{parts[0]}"
+                            except Exception:
+                                pass
+                                
+                        try:
+                            min_p = float(r.get("min_price", 0))
+                            modal_p = float(r.get("modal_price", 0))
+                            max_p = float(r.get("max_price", 0))
+                        except Exception:
+                            continue
+                            
+                        # Check if price already exists
+                        cursor.execute(
+                            "SELECT id FROM daily_prices WHERE mandi_id = ? AND commodity_id = ? AND date = ?",
+                            (matched_mandi_id, matched_comm_id, date_str)
+                        )
+                        existing = cursor.fetchone()
+                        
+                        if existing:
+                            cursor.execute(
+                                "UPDATE daily_prices SET min_price = ?, modal_price = ?, max_price = ?, source = 'AGMARKNET (Synced Live)' WHERE id = ?",
+                                (min_p, modal_p, max_p, existing["id"])
+                            )
+                        else:
+                            cursor.execute(
+                                "INSERT INTO daily_prices (id, mandi_id, commodity_id, date, min_price, modal_price, max_price, source) VALUES (?, ?, ?, ?, ?, ?, ?, 'AGMARKNET (Synced Live)')",
+                                (str(uuid.uuid4()), matched_mandi_id, matched_comm_id, date_str, min_p, modal_p, max_p)
+                            )
+                        success_count += 1
+                        
+                    conn.commit()
+                    conn.close()
+                    print(f"[Price Syncer] Successfully synced and inserted/updated {success_count} prices in DB.")
+                else:
+                    print(f"[Price Syncer] API returned error {response.status_code}: {response.text}")
+            except Exception as e:
+                print(f"[Price Syncer] Error during price sync: {e}")
+                
+            # Sleep for 12 hours before next sync
+            time.sleep(43200)
+
+    t = threading.Thread(target=sync_worker, daemon=True)
+    t.start()
+
+start_background_price_sync()
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})

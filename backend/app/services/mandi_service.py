@@ -36,10 +36,11 @@ class MandiService:
                 "api-key": api_key,
                 "format": "json",
                 "filters[state]": state,
-                "filters[district]": district,
                 "filters[commodity]": commodity,
                 "limit": 50
             }
+            if district and district.lower() != state.lower() and district.lower() != "main district":
+                params["filters[district]"] = district
             
             response = requests.get(url, params=params, timeout=10)
             if response.status_code == 200:
@@ -111,8 +112,8 @@ class MandiService:
         
         # Fallback to local DB seeded daily_prices
         cursor.execute(
-            "SELECT id, mandi_name, state, district FROM mandis WHERE state LIKE ? AND district LIKE ? AND mandi_name LIKE ?",
-            (state, district, mandi_name)
+            "SELECT id, mandi_name, state, district FROM mandis WHERE state LIKE ? AND mandi_name LIKE ?",
+            (f"%{state}%", f"%{mandi_name}%")
         )
         mandi = cursor.fetchone()
         

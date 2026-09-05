@@ -7,25 +7,26 @@ from typing import Dict, Any, Optional
 # Basic rule-based fallback keyword dictionaries
 LANG_PATTERNS = {
     "kn": re.compile(r"[\u0c80-\u0cff]"), # Kannada Unicode block
-    "hi": re.compile(r"[\u0900-\u097f]")  # Devanagari Unicode block (Hindi/Marathi)
+    "hi": re.compile(r"[\u0900-\u097f]"), # Devanagari Unicode block (Hindi/Marathi)
+    "ta": re.compile(r"[\u0b80-\u0bff]")  # Tamil Unicode block
 }
 
 COMMODITY_KEYWORDS = {
-    "Maize": ["maize", "corn", "maze", "ಮಕ್ಕೆಜೋಳ", "ಮೆಕ್ಕೆಜೋಳ", "ಮಕ್ಕ ಜೋಳ", "ಜೋಳ", "मक्का"],
-    "Wheat": ["wheat", "wheet", "gehun", "gehu", "गेहूं", "कनक", "ಗೋಧಿ"],
-    "Paddy (Rice)": ["paddy", "rice", "धान", "ಚಾವಲ್", "ಭತ್ತ", "ರೈಸ್"],
-    "Soyabean": ["soyabean", "soybean", "सोयाबीन", "ಸೋಯาಬೀನ್"],
-    "Onion": ["onion", "प्याज", "कांदा", "ಈರುಳ್ಳಿ"],
-    "Tomato": ["tomato", "टमाटर", "ಟೊಮೆಟೊ"],
-    "Toor Dal": ["toor dal", "toor", "arhar", "arhar dal", "ತೊಗರಿ ಬೇಳೆ", "ತೊಗರಿ", "तुअर", "अरहर"],
-    "Cotton": ["cotton", "kapas", "ಹತ್ತಿ", "कपास"],
-    "Gram (Chana)": ["gram", "chana", "चना", "ಕಡಲೆ", "ಕಡಲೆ ಬೇಳೆ"]
+    "Maize": ["maize", "corn", "maze", "ಮಕ್ಕೆಜೋಳ", "ಮೆಕ್ಕೆಜೋಳ", "ಮಕ್ಕ ಜೋಳ", "ಜೋಳ", "मक्का", "மக்காச்சோளம்"],
+    "Wheat": ["wheat", "wheet", "gehun", "gehu", "गेहूं", "कनक", "ಗೋಧಿ", "கோதுமை"],
+    "Paddy (Rice)": ["paddy", "rice", "धान", "ಚಾವಲ್", "ಭತ್ತ", "ರೈಸ್", "அரிசி", "நெல்"],
+    "Soyabean": ["soyabean", "soybean", "सोयाबीन", "ಸೋಯಾಬೀನ್", "சோயாபீன்"],
+    "Onion": ["onion", "प्याज", "कांदा", "ಈರುಳ್ಳಿ", "வெங்காயம்"],
+    "Tomato": ["tomato", "टमाटर", "ಟೊಮೆಟೊ", "தக்காளி"],
+    "Toor Dal": ["toor dal", "toor", "arhar", "arhar dal", "ತೊಗರಿ ಬೇಳೆ", "ತೊಗರಿ", "तुअर", "अरहर", "துவரம் பருப்பு"],
+    "Cotton": ["cotton", "kapas", "ಹತ್ತಿ", "कपास", "பருத்தி"],
+    "Gram (Chana)": ["gram", "chana", "चना", "ಕಡಲೆ", "ಕಡಲೆ ಬೇಳೆ", "கொண்டைக்கடலை"]
 }
 
 LOCATION_KEYWORDS = {
     "Shivamogga": {"district": "Shivamogga", "state": "Karnataka", "keywords": ["shimoga", "shivamogga", "ಶಿವಮೊಗ್ಗ"]},
     "Davanagere": {"district": "Davanagere", "state": "Karnataka", "keywords": ["davanagere", "ದಾವಣಗೆರೆ"]},
-    "Bengaluru": {"district": "Bengaluru", "state": "Karnataka", "keywords": ["bengaluru", "bangalore", "ಬೆಂಗಳೂರು", "yeshwanthpur"]},
+    "Bengaluru": {"district": "Bengaluru", "state": "Karnataka", "keywords": ["bengaluru", "bangalore", "ಬೆಂಗಳೂರು", "yeshwanthpur", "பெங்களூரு"]},
     "Indore": {"district": "Indore", "state": "Madhya Pradesh", "keywords": ["indore", "इंदौर"]},
     "Ujjain": {"district": "Ujjain", "state": "Madhya Pradesh", "keywords": ["ujjain", "उज्जैन"]},
     "Nashik": {"district": "Nashik", "state": "Maharashtra", "keywords": ["lasalgaon", "nashik", "नाशिक", "लासलगाव"]},
@@ -35,7 +36,7 @@ LOCATION_KEYWORDS = {
 class AIService:
     @staticmethod
     def detect_language(text: str) -> str:
-        """Detect language: default to en, supports hi, kn based on scripts"""
+        """Detect language: default to en, supports hi, kn, ta based on script"""
         for lang, pattern in LANG_PATTERNS.items():
             if pattern.search(text):
                 return lang
@@ -50,13 +51,16 @@ class AIService:
         # 1. Detect Intent
         intent = "price" # Default
         
-        dealer_words = ["dap", "urea", "fertilizer", "seed", "pesticide", "खाद", "बीज", "कीटनाशक", "ರಸಗೊಬ್ಬರ", "ಬೀಜ", "ಕೀಟನಾಶಕ"]
-        buyer_words = ["sell", "buyer", "purchase", "wholesaler", "trader", "बेचना", "खरीददार", "व्यापारी", "ಮಾರಾಟ", "ಖರೀದಿದಾರ", "ವ್ಯಾಪಾರಿ"]
-        weather_words = ["weather", "rain", "monsoon", "temperature", "मौसम", "बारिश", "ಮಳೆ", "ಹವಾಮಾನ"]
-        msp_words = ["msp", "support price", "एमएसपी", "समर्थन मूल्य", "ಬೆಂಬಲ ಬೆಲೆ"]
-        scheme_words = ["scheme", "kisan", "yojana", "योजना", "ಯೋಜನೆ"]
+        list_words = ["list", "all crops", "commodities", "सूची", "목록", "ಪಟ್ಟಿ", "பட்டியல்"]
+        dealer_words = ["dap", "urea", "fertilizer", "seed", "pesticide", "खाद", "बीज", "कीटनाशक", "ರಸಗೊಬ್ಬರ", "ಬೀಜ", "ಕೀಟನಾಶಕ", "உரம்"]
+        buyer_words = ["sell", "buyer", "purchase", "wholesaler", "trader", "बेचना", "खरीददार", "व्यापारी", "ಮಾರಾಟ", "ಖರೀದಿದಾರ", "ವ್ಯಾಪಾರಿ", "கொள்முதல்"]
+        weather_words = ["weather", "rain", "monsoon", "temperature", "मौसम", "बारिश", "ಮಳೆ", "ಹವಾಮಾನ", "வானிலை"]
+        msp_words = ["msp", "support price", "एमएसपी", "समर्थन मूल्य", "ಬೆಂಬಲ ಬೆಲೆ", "ஆதரவு விலை"]
+        scheme_words = ["scheme", "kisan", "yojana", "योजना", "ಯೋಜನೆ", "திட்டம்"]
 
-        if any(w in text_lower for w in dealer_words):
+        if any(w in text_lower for w in list_words):
+            intent = "list_commodities"
+        elif any(w in text_lower for w in dealer_words):
             intent = "dealer"
         elif any(w in text_lower for w in buyer_words):
             intent = "buyer"
@@ -71,7 +75,6 @@ class AIService:
         extracted_commodity = None
         for comm, kw_list in COMMODITY_KEYWORDS.items():
             for kw in kw_list:
-                # Matches the keyword with start/end of string, spaces, or punctuation around it
                 pattern = rf"(?:\s|^){re.escape(kw)}(?:\s|$|[.,?!])"
                 if re.search(pattern, text_lower):
                     extracted_commodity = comm
@@ -105,24 +108,33 @@ class AIService:
     def parse_query_with_llm(text: str, api_key: str) -> Optional[Dict[str, Any]]:
         """Call Gemini API for robust NLP parsing of agricultural queries, rotating models on 429 errors"""
         prompt = f"""
-        You are a smart AI agricultural assistant. A farmer has asked you a query in English, Hindi, or Kannada.
+        You are a smart AI agricultural assistant. A farmer has asked you a query in English, Hindi, Kannada, or Tamil.
         
-        First, check if the query is asking about one of these core app features: "price" (mandi rates), "msp" (minimum support price), "buyer" (find verified buyers to sell), "dealer" (find input fertilizer/seed dealers), "weather" (weather forecasts), "scheme" (govt schemes).
-        If it is a core feature, extract the details.
-        - Supported commodities: "Maize", "Wheat", "Paddy (Rice)", "Soyabean", "Onion", "Tomato". Map synonyms accordingly.
-        - States & Districts should be standardized (e.g. State: "Karnataka", District: "Shivamogga"; State: "Maharashtra", District: "Pune").
+        Check if the query is asking about one of these core app features:
+        - "price": asking for mandi price/rate of a crop in a city/mandi (e.g. "इंदौर में गेहूं का भाव", "ಶಿವಮೊಗ್ಗದಲ್ಲಿ ಜೋಳದ ರೇಟ್")
+        - "list_commodities": asking what crops/commodities are available in a mandi, city, or state (e.g. "List all commodities for Bengaluru", "इंदौर की सभी फसलों की सूची")
+        - "msp": minimum support price
+        - "buyer": find verified buyers/wholesalers to sell produce
+        - "dealer": find input fertilizer/seed dealers
+        - "weather": weather forecasts
+        - "scheme": govt schemes
         
-        If the query is a general farming question, agronomy advice, greeting, or anything outside those core features, set the intent to "general".
-        When intent is "general", you must also provide a helpful, expert response in the exact same language the user used (en, hi, or kn) in the "general_answer" field.
+        Mandatory Entity Extraction & Standardization:
+        - "commodity": Extract commodity name and ALWAYS translate/standardize to English (e.g., "Wheat", "Maize", "Onion", "Tomato", "Rice", "Cotton", "Potato", "Soyabean", "Chana"). Always map Hindi ("गेहूं"), Kannada ("ಗೋಧಿ"), Tamil ("கோதுமை") to English ("Wheat").
+        - "district": Extract District/City Name in English (e.g. "Bengaluru", "Indore", "Nashik", "Shivamogga", "Pune", "Ludhiana", "Agra"). Translate Hindi ("इंदौर"), Kannada ("ಬೆಂಗಳೂರು"), Tamil ("பெங்களூரு") to English.
+        - "state": Extract State Name in English (e.g. "Karnataka", "Madhya Pradesh", "Maharashtra", "Tamil Nadu", "Uttar Pradesh", "Punjab").
+        - "language": "en" | "hi" | "kn" | "ta"
+        
+        If the query is a general farming question or greeting outside core features, set intent to "general" and write a helpful expert response in "general_answer" in the exact input language.
 
-        Output format MUST be strictly JSON (no markdown formatting, no explanation):
+        Output format MUST be strictly JSON (no markdown formatting):
         {{
-            "intent": "price" | "msp" | "buyer" | "dealer" | "weather" | "scheme" | "general",
-            "commodity": "Maize" | "Wheat" | "Paddy (Rice)" | "Soyabean" | "Onion" | "Tomato" | null,
-            "state": "State Name" | null,
-            "district": "District Name" | null,
-            "language": "en" | "hi" | "kn",
-            "general_answer": "Expert response to the user's general query in their language" | null,
+            "intent": "price" | "list_commodities" | "msp" | "buyer" | "dealer" | "weather" | "scheme" | "general",
+            "commodity": "English Commodity Name" | null,
+            "state": "English State Name" | null,
+            "district": "English District/City Name" | null,
+            "language": "en" | "hi" | "kn" | "ta",
+            "general_answer": "Expert response in user's language" | null,
             "raw_query": "original input text"
         }}
         

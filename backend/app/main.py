@@ -196,7 +196,7 @@ RESPONSES = {
         "scheme_template": "📋 *सरकारी योजना: पीएम-किसान सम्मान निधि*\nइस योजना के तहत भूमिधारक किसान परिवारों को ₹6,000 प्रति वर्ष की वित्तीय सहायता तीन समान किस्तों में मिलती है।\nअपना स्टेटस यहाँ जांचें: https://pmkisan.gov.in/"
     },
     "kn": {
-        "greeting": "ನಮಸ್ಕಾರ! ನಾನು ಕೃಷಿಮಿತ್ರ AI, ನಿಮ್ಮ ಕೃಷಿ ಸಹಾಯಕ.\nಇಂದು ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು? ನೀವು ಧಾನ್ಯದ ದರಗಳು (ಉದಾಹರಣೆಗೆ 'ಶಿವಮೊಗ್ಗದಲ್ಲಿ ಮೆಕ್ಕೆಜೋಳದ ರೇಟ್'), ರಸಗೊಬ್ಬರ/ಬೀಜ ವಿತರಕರ ಹುಡುಕಾಟ ಅಥವಾ ಖರೀದಿದಾರರ ಬಗ್ಗೆ ಕೇಳಬಹುದು.",
+        "greeting": "ನಮಸ್ಕಾರ! ನಾನು ಕೃಷಿಮಿತ್ರ AI, ನಿಮ್ಮ ಕೃಷಿ ಸಹಾಯಕ.\nಇಂದು ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು? ನೀವು ಧಾನ್ಯದ ದರಗಳು (ಉದಾಹರಣೆಗೆ 'ಶಿವಮೊಗ್ಗದಲ್ಲಿ ಜೋಳದ ರೇಟ್'), ರಸಗೊಬ್ಬರ/ಬೀಜ ವಿತರಕರ ಹುಡುಕಾಟ ಅಥವಾ ಖರೀದಿದಾರರ ಬಗ್ಗೆ ಕೇಳಬಹುದು.",
         "location_missing": "ದರಗಳನ್ನು ತಿಳಿಯಲು, ದಯವಿಟ್ಟು ನಿಮ್ಮ ಜಿಲ್ಲೆ ಅಥವಾ ಎಪಿಎಂಸಿ ಮಾರುಕಟ್ಟೆಯ ಹೆಸರನ್ನು ತಿಳಿಸಿ.",
         "commodity_missing": "ನೀವು ಯಾವ ಬೆಳೆಯ ದರವನ್ನು ತಿಳಿಯಲು ಬಯಸುತ್ತೀರಿ? (ಉದಾಹರಣೆಗೆ ಮೆಕ್ಕೆಜೋಳ, ಗೋಧಿ, ತೊಗರಿ ಬೇಳೆ, ಸೋಯಾಬೀನ್, ಈರುಳ್ಳಿ, ಟೊಮೆಟೊ, ಹತ್ತಿ, ಕಡಲೆ)",
         "not_found": "ಕ್ಷಮಿಸಿ, {mandi} ಮಾರುಕಟ್ಟೆಯಲ್ಲಿ {commodity} ಬೆಲೆ ವಿವರಗಳು ಲಭ್ಯವಿಲ್ಲ.",
@@ -205,6 +205,17 @@ RESPONSES = {
         "dealer_template": "🚜 *{location} ಹತ್ತಿರದ ಗೊಬ್ಬರ ಮತ್ತು ಬೀಜದ ಅಂಗಡಿಗಳು*:\n\n{dealer_list}\n\nದಾಸ್ತಾನು ವಿವರಗಳಿಗಾಗಿ ಭೇಟಿ ನೀಡಿ:\n{app_url}/?tab=marketplace",
         "weather_template": "🌤️ *{location} ಹವಾಮಾನ ಮುನ್ಸೂಚನೆ*:\nಇಂದು: ಬಿಸಿಲಿನ ವಾತಾವರಣ, ಗರಿಷ್ಠ 32°C, ಕನಿಷ್ಠ 22°C.\nನಾಳೆ: ಮಧ್ಯಾಹ್ನ ಸಣ್ಣ ಪ್ರಮಾಣದ ಮಳೆ ನಿರೀಕ್ಷಿಸಲಾಗಿದೆ. ಬಿತ್ತನೆಗೆ ಉತ್ತಮ ಸಮಯ.",
         "scheme_template": "📋 *ಸರ್ಕಾರಿ ಯೋಜನೆ: ಪಿಎಂ-ಕಿಸಾನ್ ಸಮ್ಮಾನ್ ನಿಧಿ*\nಈ ಯೋಜನೆಯಡಿ ಎಲ್ಲಾ ಭೂಹಿಡುವಳಿ ರೈತ ಕುಟುಂಬಗಳಿಗೆ ವರ್ಷಕ್ಕೆ ₹6,000 ಆರ್ಥಿಕ ಸಹಾಯವನ್ನು ಮೂರು ಸಮಾನ ಕಂತುಗಳಲ್ಲಿ ನೀಡಲಾಗುತ್ತದೆ.\nನಿಮ್ಮ ಅರ್ಹತೆಯನ್ನು ಇಲ್ಲಿ ಪರಿಶೀಲಿಸಿ: https://pmkisan.gov.in/"
+    },
+    "ta": {
+        "greeting": "வணக்கம்! நான் கிருஷிமித்ரா AI, உங்கள் விவசாய உதவியாளர்.\nஇன்று நான் உங்களுக்கு எவ்வாறு உதவட்டும்? சந்தை விலைகள் அல்லது உரக் கடைகளைப் பற்றி நீங்கள் கேட்கலாம்.",
+        "location_missing": "விலையை அறிய, தயவுசெய்து உங்கள் மாவட்டம் அல்லது சந்தை பெயரைக் குறிப்பிடவும்.",
+        "commodity_missing": "எந்தப் பயிரின் விலையை அறிய விரும்புகிறீர்கள்? (எ.கா. கோதுமை, மக்காச்சோளம், வெங்காயம், தக்காளி)",
+        "not_found": "மன்னிக்கவும், {mandi} சந்தையில் {commodity} க்கான விலை விவரங்கள் கிடைக்கவில்லை.",
+        "price_template": "🌾 *{mandi} சந்தையில் {commodity} விலை* ({date})\n\n• சராசரி விலை: *₹{modal}* / குவிண்டால்\n• குறைந்தபட்ச விலை: *₹{min}*\n• அதிகபட்ச விலை: *₹{max}*\n• ஆதாரம்: {source}\n\n📊 7 நாள் விலை போக்கை பார்க்க:\n{app_url}/?tab=mandi&mandi={mandi_encoded}&commodity={commodity_encoded}",
+        "buyer_template": "🤝 *{district} இல் {commodity} சரிபார்க்கப்பட்ட வியாபாரிகள்*:\n\n{buyer_list}\n\nமேலும் பார்க்க: {app_url}/?tab=marketplace",
+        "dealer_template": "🚜 *{location} அருகில் உள்ள உர மற்றும் விதை கடைகள்*:\n\n{dealer_list}\n\nபார்க்க: {app_url}/?tab=marketplace",
+        "weather_template": "🌤️ *{location} வானிலை அறிக்கை*:\nஇன்று: வெயில், அதிகபட்சம் 32°C, குறைந்தபட்சம் 22°C.",
+        "scheme_template": "📋 *அரசு திட்டம்: பிஎம்-கிசான்*\nஆண்டிற்கு ₹6,000 நிதி உதவி பெற: https://pmkisan.gov.in/"
     }
 }
 
@@ -223,11 +234,32 @@ def generate_chatbot_response(query_text: str, db: sqlite3.Connection) -> str:
     intent = parsed.get("intent")
     
     # Quick greeting catch
-    if query_text.lower().strip() in ["hello", "hi", "hey", "नमस्ते", "ನಮಸ್ಕಾರ"]:
+    if query_text.lower().strip() in ["hello", "hi", "hey", "नमस्ते", "ನಮಸ್ಕಾರ", "வணக்கம்"]:
         return texts["greeting"]
 
     # Process Intent
-    if intent == "price":
+    if intent == "list_commodities":
+        mandi_search = parsed.get("mandi") or parsed.get("district") or parsed.get("state") or "Bengaluru"
+        cursor.execute(
+            "SELECT DISTINCT c.commodity_name FROM daily_prices dp JOIN mandis m ON dp.mandi_id = m.id JOIN commodities c ON dp.commodity_id = c.id WHERE m.state LIKE ? OR m.district LIKE ? OR m.mandi_name LIKE ? LIMIT 10",
+            (f"%{mandi_search}%", f"%{mandi_search}%", f"%{mandi_search}%")
+        )
+        comm_rows = cursor.fetchall()
+        if not comm_rows:
+            cursor.execute("SELECT commodity_name FROM commodities LIMIT 8")
+            comm_rows = cursor.fetchall()
+            
+        crop_names = ", ".join([r["commodity_name"] for r in comm_rows])
+        if lang == "hi":
+            return f"🌾 {mandi_search} में उपलब्ध प्रमुख फसलें हैं: {crop_names}।"
+        elif lang == "kn":
+            return f"🌾 {mandi_search} ಮಾರುಕಟ್ಟೆಯಲ್ಲಿ ಲಭ್ಯವಿರುವ ಪ್ರಮುಖ ಬೆಳೆಗಳು: {crop_names}."
+        elif lang == "ta":
+            return f"🌾 {mandi_search} சந்தையில் கிடைக்கும் பயிர்கள்: {crop_names}."
+        else:
+            return f"🌾 Prices for the following commodities are currently available in {mandi_search}: {crop_names}."
+
+    elif intent == "price":
         commodity = parsed.get("commodity")
         district = parsed.get("district") or parsed.get("state")
         

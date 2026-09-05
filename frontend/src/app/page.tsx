@@ -11,7 +11,7 @@ import {
 } from "recharts";
 
 // Language UI translations
-const TRANSLATIONS = {
+const TRANSLATIONS: Record<string, any> = {
   en: {
     app_title: "KrishiMitra AI",
     tagline: "Your Hyperlocal Mandi & Input Assistant",
@@ -21,6 +21,7 @@ const TRANSLATIONS = {
     tab_whatsapp: "WhatsApp Chat",
     btn_mic_start: "Tap to Speak",
     btn_mic_stop: "Listening... Tap to Stop",
+    btn_upload_csv: "Upload Rates (CSV)",
     select_lang: "Select Language",
     select_state: "Select State",
     select_district: "Select District",
@@ -55,6 +56,7 @@ const TRANSLATIONS = {
     tab_whatsapp: "व्हाट्सएप चैट",
     btn_mic_start: "बोलने के लिए दबाएं",
     btn_mic_stop: "सुन रहा हूँ... रोकने के लिए दबाएं",
+    btn_upload_csv: "भाव अपलोड करें (CSV)",
     select_lang: "भाषा चुनें",
     select_state: "राज्य चुनें",
     select_district: "जिला चुनें",
@@ -89,6 +91,7 @@ const TRANSLATIONS = {
     tab_whatsapp: "ವಾಟ್ಸಾಪ್ ಚಾಟ್",
     btn_mic_start: "ಮಾತನಾಡಲು ಒತ್ತಿ",
     btn_mic_stop: "ಕೇಳಿಸಿಕೊಳ್ಳುತ್ತಿದೆ... ನಿಲ್ಲಿಸಲು ಒತ್ತಿ",
+    btn_upload_csv: "ದರ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ (CSV)",
     select_lang: "ಭಾಷೆ ಆರಿಸಿ",
     select_state: "ರಾಜ್ಯ ಆರಿಸಿ",
     select_district: "ಜಿಲ್ಲೆ ಆರಿಸಿ",
@@ -113,6 +116,41 @@ const TRANSLATIONS = {
     no_records: "ಯಾವುದೇ ದರ ಪಟ್ಟಿ ಲಭ್ಯವಿಲ್ಲ. ಬೇರೆ ಮಾರುಕಟ್ಟೆ ಅಥವಾ ಬೆಳೆ ಆರಿಸಿ.",
     msp: "ಬೆಂಬಲ ಬೆಲೆ (MSP)",
     greeting: "ನಮಸ್ಕಾರ! ನಿಮ್ಮ ಕೃಷಿ ಸಂಬಂಧಿತ ಪ್ರಶ್ನೆಗಳಿಗೆ ನಾನು ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?"
+  },
+  ta: {
+    app_title: "கிருஷிமித்ரா AI",
+    tagline: "உங்கள் விவசாய மற்றும் சந்தை உதவியாளர்",
+    tab_assistant: "குரல் உதவியாளர்",
+    tab_mandi: "சந்தை விலைகள்",
+    tab_market: "சந்தை (வியாபாரிகள்)",
+    tab_whatsapp: "வாட்ஸ்அப் அரட்டை",
+    btn_mic_start: "பேச தட்டவும்",
+    btn_mic_stop: "கேட்கிறது... நிறுத்த தட்டவும்",
+    btn_upload_csv: "விலை பதிவேற்றம் (CSV)",
+    select_lang: "மொழியைத் தேர்ந்தெடுக்கவும்",
+    select_state: "மாநிலத்தைத் தேர்ந்தெடுக்கவும்",
+    select_district: "மாவட்டத்தைத் தேர்ந்தெடுக்கவும்",
+    select_mandi: "சந்தையைத் தேர்ந்தெடுக்கவும்",
+    select_commodity: "பயிரைத் தேர்ந்தெடுக்கவும்",
+    min_price: "குறைந்தபட்ச விலை",
+    max_price: "அதிகபட்ச விலை",
+    modal_price: "சராசரி விலை",
+    gov_verified: "அரசு அதிகாரப்பூர்வ தகவல்",
+    mandi_header: "சந்தை விலை பட்டியல்",
+    trend_header: "7 நாள் விலை போக்கு (₹/குவிண்டால்)",
+    buyers_header: "சரிபார்க்கப்பட்ட மொத்த வியாபாரிகள்",
+    dealers_header: "உரம், விதை மற்றும் பூச்சிக்கொல்லி கடைகள்",
+    stock_status: "இருப்பு:",
+    rating: "மதிப்பீடு",
+    whats_app_chat: "வாட்ஸ்அப்",
+    call: "அழைக்கவும்",
+    prompt_placeholder: "கேளுங்கள் எ.கா. 'இந்தூரில் கோதுமை விலை'...",
+    send: "அனுப்பு",
+    offline_mode: "ஆஃப்லைன் பயன்முறை",
+    last_updated: "கடைசியாக புதுப்பிக்கப்பட்டது",
+    no_records: "விலை விவரங்கள் கிடைக்கவில்லை.",
+    msp: "ஆதரவு விலை (MSP)",
+    greeting: "வணக்கம்! உங்கள் விவசாய சந்தேகங்களுக்கு நான் எவ்வாறு உதவட்டும்?"
   }
 };
 
@@ -120,20 +158,13 @@ const LANGUAGES = [
   { code: "en", name: "English" },
   { code: "hi", name: "हिन्दी" },
   { code: "kn", name: "ಕನ್ನಡ" },
-  { code: "mr", name: "मराठी" },
-  { code: "ta", name: "தமிழ்" },
-  { code: "te", name: "తెలుగు" },
-  { code: "ml", name: "മലയാളം" },
-  { code: "gu", name: "ગુજરાતી" },
-  { code: "pa", name: "ਪੰਜਾਬಿ" },
-  { code: "bn", name: "বাংলা" },
-  { code: "other", name: "Other" }
+  { code: "ta", name: "தமிழ்" }
 ];
 
 export default function Home() {
   const [lang, setLang] = useState<string>("en");
   const getTranslation = (l: string) => {
-    if (l === "hi" || l === "kn") return TRANSLATIONS[l];
+    if (TRANSLATIONS[l]) return TRANSLATIONS[l];
     return TRANSLATIONS["en"]; // Fallback to English
   };
   const t = getTranslation(lang);
@@ -246,20 +277,46 @@ export default function Home() {
     waEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [waLog]);
 
-  // Trigger TTS voice synthesis
+  // Trigger TTS voice synthesis with markdown stripping and natural voice selection
   const speakText = (text: string) => {
     if ("speechSynthesis" in window) {
-      // Cancel active voice first
       window.speechSynthesis.cancel();
       
-      const utterance = new SpeechSynthesisUtterance(text);
+      // Clean markdown formatting (*, #, •, bullet points, links) for natural voice reading
+      const cleanText = text
+        .replace(/[*#_`~•]/g, "")
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+        .replace(/http[s]?:\/\/\S+/g, "")
+        .replace(/\n+/g, ". ");
+
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.rate = 0.95; // Calm, natural pacing
+      utterance.pitch = 1.05; // Warm, pleasant pitch
+      
       if (lang === "kn") {
         utterance.lang = "kn-IN";
       } else if (lang === "hi") {
         utterance.lang = "hi-IN";
+      } else if (lang === "ta") {
+        utterance.lang = "ta-IN";
       } else {
         utterance.lang = "en-IN";
       }
+
+      // Try selecting preferred native voice engine if available
+      try {
+        const voices = window.speechSynthesis.getVoices();
+        const preferredVoice = voices.find(v => 
+          (lang === "hi" && (v.lang.includes("hi") || v.name.includes("Hindi"))) ||
+          (lang === "kn" && (v.lang.includes("kn") || v.name.includes("Kannada"))) ||
+          (lang === "ta" && (v.lang.includes("ta") || v.name.includes("Tamil"))) ||
+          (lang === "en" && (v.lang.includes("en-IN") || v.name.includes("India")))
+        );
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+        }
+      } catch (e) {}
+
       window.speechSynthesis.speak(utterance);
     }
   };
@@ -826,7 +883,7 @@ export default function Home() {
                 }}
                 className="text-xs bg-primary-600 hover:bg-primary-700 text-white font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition cursor-pointer"
               >
-                📤 Upload Rates (CSV)
+                📤 {t.btn_upload_csv}
               </button>
             </div>
             

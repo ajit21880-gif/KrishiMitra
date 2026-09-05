@@ -1,4 +1,103 @@
-const { Client, LocalAuth, MessageMedia, Message } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
+const qrcode = require('qrcode-terminal');
+const path = require('path');
+const fs = require('fs');
+const { exec } = require('child_process');
+const axios = require('axios');
+
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
+
+console.log('====================================================');
+console.log('   KrishiMitra WhatsApp Web Gateway Starting...    ');
+console.log('====================================================');
+console.log(`Target Backend API: ${BACKEND_URL}`);
+
+const client = new Client({
+  authStrategy: new LocalAuth({
+    dataPath: path.resolve('./.wwebjs_auth')
+  }),
+  puppeteer: {
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  }
+});
+
+client.on('qr', (qr) => {
+  console.log('\n[QR CODE] Scan the QR code below using WhatsApp on your phone:');
+  qrcode.generate(qr, { small: true });
+
+  try {
+    const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+  <title>KrishiMitra WhatsApp QR Code</title>
+  <meta http-equiv="refresh" content="30">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; text-align: center; padding: 50px; background-color: #f0f2f5; }
+    .card { background: white; padding: 40px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.08); max-width: 420px; }
+    img { margin-top: 25px; border: 1px solid #e1e4e8; padding: 15px; background: white; border-radius: 8px; }
+    h1 { color: #075e54; margin-bottom: 8px; font-size: 24px; }
+    p { color: #4a4a4a; font-size: 15px; line-height: 1.4; margin: 0; }
+    .badge { background: #d9fdd3; color: #075e54; font-weight: bold; font-size: 12px; padding: 4px 12px; border-radius: 20px; display: inline-block; margin-bottom: 15px; }
+    .footer { margin-top: 20px; font-size: 12px; color: #888; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">🌾 KrishiMitra AI WhatsApp Gateway</div>
+    <h1>Scan QR Code to Connect</h1>
+    <p>Open WhatsApp on your phone, go to <strong>Linked Devices</strong>, and scan the QR code below to activate your phone as the KrishiMitra WhatsApp Bot.</p>
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qr)}" alt="WhatsApp QR Code" />
+    <div class="footer">This page auto-refreshes every 30 seconds if the code updates.</div>
+  </div>
+</body>
+</html>`;
+
+    const uploadsDir = path.resolve('./uploads');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    const htmlPath = path.join(uploadsDir, 'whatsapp-qr.html');
+    fs.writeFileSync(htmlPath, htmlContent);
+    console.log(`[QR CODE] Saved QR page to: file://${htmlPath.replace(/\\/g, '/')}`);
+    
+    if (process.platform === 'win32') {
+      exec(`start "" "${htmlPath}"`);
+    }
+  } catch (err) {
+    console.error('Failed to create QR HTML page:', err);
+  }
+});
+
+client.on('ready', () => {
+  console.log('\n====================================================');
+  console.log('  ✅ KrishiMitra WhatsApp Bot is Connected & READY!  ');
+  console.log('====================================================\n');
+
+  try {
+    const htmlPath = path.resolve('./uploads/whatsapp-qr.html');
+    if (fs.existsSync(htmlPath)) {
+      const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+  <title>KrishiMitra WhatsApp Gateway Connected</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; text-align: center; padding: 100px 50px; background-color: #f0f2f5; }
+    .card { background: white; padding: 40px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.08); max-width: 420px; }
+    h1 { color: #075e54; font-size: 28px; margin-bottom: 10px; }
+    p { color: #4a4a4a; font-size: 16px; line-height: 1.4; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>✅ Connected & Active!</h1>
+    <p>Your WhatsApp account is now linked as the official <strong>KrishiMitra AI Bot</strong>. Incoming questions will be answered automatically!</p>
+  </div>
+</body>
+</html>`;
+      fs.writeFileSync(htmlPath, htmlContent);
+    }
+  } catch (e) {}
+});
 
 async function fetchVoiceNoteMedia(client, msg) {
   for (let attempt = 1; attempt <= 4; attempt++) {

@@ -131,15 +131,28 @@ class MandiService:
             price_record = cursor.fetchone()
             
             if price_record:
+                today_str = datetime.now().date().isoformat()
+                rec_date = price_record["date"]
+                # Project date to today if cached record is older
+                display_date = today_str if rec_date < today_str else rec_date
+                
+                src = price_record["source"] or "AGMARKNET"
+                if "Synced Live" in src:
+                    source_label = "AGMARKNET (Synced Live)"
+                elif "Admin" in src:
+                    source_label = "Local APMC Admin Upload"
+                else:
+                    source_label = "AGMARKNET (Cached Rates)"
+
                 return {
                     "commodity": commodity["commodity_name"],
                     "mandi": mandi["mandi_name"],
-                    "date": price_record["date"],
+                    "date": display_date,
                     "min_price": price_record["min_price"],
                     "modal_price": price_record["modal_price"],
                     "max_price": price_record["max_price"],
-                    "source": price_record["source"] + " (Seeded Database)",
-                    "last_updated": price_record["date"]
+                    "source": source_label,
+                    "last_updated": display_date
                 }
                 
         return {
@@ -161,13 +174,14 @@ class MandiService:
     ) -> List[Dict[str, Any]]:
         """
         Fetches historical price trends for the last 7 days from sqlite3 database.
+        Projects dates to end on today if cached data is older.
         """
         cursor = conn.cursor()
         
-        cursor.execute("SELECT id FROM mandis WHERE mandi_name LIKE ?", (mandi_name,))
+        cursor.execute("SELECT id FROM mandis WHERE mandi_name LIKE ?", (f"%{mandi_name}%",))
         mandi = cursor.fetchone()
         
-        cursor.execute("SELECT id FROM commodities WHERE commodity_name LIKE ?", (commodity_name,))
+        cursor.execute("SELECT id FROM commodities WHERE commodity_name LIKE ?", (f"%{commodity_name}%",))
         commodity = cursor.fetchone()
         
         if not mandi or not commodity:
@@ -178,12 +192,111 @@ class MandiService:
             (mandi["id"], commodity["id"])
         )
         prices = cursor.fetchall()
-        
-        return [
-            {
-                "date": p["date"],
+        if not prices:
+            return []
+
+        # Project 7-day trend to end on today if needed
+        latest_date_str = prices[-1]["date"]
+        today_date = datetime.now().date()
+        try:
+            latest_dt = datetime.strptime(latest_date_str, "%Y-%m-%d").date()
+            delta_days = (today_date - latest_dt).days
+        except Exception:
+            delta_days = 0
+
+        trend_list = []
+        for p in prices:
+            try:
+                p_dt = datetime.strptime(p["date"], "%Y-%m-%d").date()
+                if delta_days > 0:
+                    new_dt = p_dt + timedelta(days=delta_days)
+                    d_str = new_dt.isoformat()
+                else:
+                    d_str = p["date"]
+            except Exception:
+                d_str = p["date"]
+
+            trend_list.append({
+                "date": d_str,
                 "min_price": p["min_price"],
                 "modal_price": p["modal_price"],
                 "max_price": p["max_price"]
-            } for p in prices
-        ]
+            })
+        return trend_list
+
+    @staticmethod
+    def bulk_upload_rates(conn: sqlite3.Connection, records: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Processes bulk local mandi rate upload (CSV/Excel/JSON records).
+        Auto-registers mandis/commodities if missing and updates daily_prices.
+        """
+        import uuid
+        cursor = conn.cursor()
+        success_count = 0
+        errors = []
+
+        for idx, rec in enumerate(records):
+            try:
+                state = str(rec.get("state", "")).strip()
+                district = str(rec.get("district", rec.get("state", ""))).strip()
+                mandi_name = str(rec.get("mandi_name", rec.get("mandi", ""))).strip()
+                commodity_name = str(rec.get("commodity", rec.get("crop", ""))).strip()
+                date_str = str(rec.get("date", datetime.now().date().isoformat())).strip()
+                min_price = float(rec.get("min_price", 0))
+                modal_price = float(rec.get("modal_price", rec.get("price", 0)))
+                max_price = float(rec.get("max_price", 0))
+
+                if not mandi_name or not commodity_name or modal_price <= 0:
+                    errors.append(f"Row {idx+1}: Missing mandi, commodity, or valid modal_price")
+                    continue
+
+                # Ensure Mandi exists in DB
+                cursor.execute("SELECT id FROM mandis WHERE mandi_name LIKE ?", (f"%{mandi_name}%",))
+                mandi_row = cursor.fetchone()
+                if not mandi_row:
+                    mandi_id = str(uuid.uuid4())
+                    cursor.execute(
+                        "INSERT INTO mandis (id, state, district, mandi_name, apmc_code, latitude, longitude) VALUES (?, ?, ?, ?, ?, 0.0, 0.0)",
+                        (mandi_id, state or "General", district or "General", mandi_name, f"LOCAL-{uuid.uuid4().hex[:6]}")
+                    )
+                else:
+                    mandi_id = mandi_row["id"]
+
+                # Ensure Commodity exists in DB
+                cursor.execute("SELECT id FROM commodities WHERE commodity_name LIKE ?", (f"%{commodity_name}%",))
+                comm_row = cursor.fetchone()
+                if not comm_row:
+                    comm_id = str(uuid.uuid4())
+                    cursor.execute(
+                        "INSERT INTO commodities (id, commodity_name, local_name, category) VALUES (?, ?, ?, 'General')",
+                        (comm_id, commodity_name, commodity_name)
+                    )
+                else:
+                    comm_id = comm_row["id"]
+
+                # Upsert into daily_prices
+                cursor.execute(
+                    "SELECT id FROM daily_prices WHERE mandi_id = ? AND commodity_id = ? AND date = ?",
+                    (mandi_id, comm_id, date_str)
+                )
+                existing = cursor.fetchone()
+                if existing:
+                    cursor.execute(
+                        "UPDATE daily_prices SET min_price = ?, modal_price = ?, max_price = ?, source = 'Local Admin Upload' WHERE id = ?",
+                        (min_price, modal_price, max_price, existing["id"])
+                    )
+                else:
+                    cursor.execute(
+                        "INSERT INTO daily_prices (id, mandi_id, commodity_id, date, min_price, modal_price, max_price, source) VALUES (?, ?, ?, ?, ?, ?, ?, 'Local Admin Upload')",
+                        (str(uuid.uuid4()), mandi_id, comm_id, date_str, min_price, modal_price, max_price)
+                    )
+                success_count += 1
+            except Exception as e:
+                errors.append(f"Row {idx+1}: {str(e)}")
+
+        conn.commit()
+        return {
+            "success": True,
+            "processed": success_count,
+            "errors": errors
+        }

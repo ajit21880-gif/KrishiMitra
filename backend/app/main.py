@@ -129,13 +129,13 @@ def start_background_price_sync():
                     conn.commit()
                     conn.close()
                     print(f"[Price Syncer] Successfully synced and inserted/updated {success_count} prices in DB.")
+                    time.sleep(43200)
                 else:
                     print(f"[Price Syncer] API returned error {response.status_code}: {response.text}")
+                    time.sleep(300)
             except Exception as e:
                 print(f"[Price Syncer] Error during price sync: {e}")
-                
-            # Sleep for 12 hours before next sync
-            time.sleep(43200)
+                time.sleep(300)
 
     t = threading.Thread(target=sync_worker, daemon=True)
     t.start()
@@ -398,6 +398,55 @@ def verify_otp():
 # =======================
 # Mandi Price Endpoints
 # =======================
+
+@app.route("/api/admin/upload-rates", methods=["POST"])
+def admin_upload_rates():
+    """
+    Admin endpoint to upload local mandi rates in bulk (JSON, CSV text, or file upload).
+    Expected fields per record: state, district, mandi_name, commodity, modal_price, [min_price], [max_price], [date]
+    """
+    import csv
+    import io
+    
+    records = []
+    
+    # 1. Check if JSON payload
+    if request.is_json:
+        data = request.get_json() or {}
+        if isinstance(data, list):
+            records = data
+        elif isinstance(data, dict):
+            records = data.get("records", [data])
+            
+    # 2. Check if CSV file or text in request
+    elif "file" in request.files:
+        uploaded_file = request.files["file"]
+        content = uploaded_file.read().decode("utf-8", errors="ignore")
+        reader = csv.DictReader(io.StringIO(content))
+        records = [row for row in reader]
+    elif request.form.get("csv_text"):
+        csv_text = request.form.get("csv_text")
+        reader = csv.DictReader(io.StringIO(csv_text))
+        records = [row for row in reader]
+    elif request.data:
+        try:
+            content = request.data.decode("utf-8", errors="ignore")
+            reader = csv.DictReader(io.StringIO(content))
+            records = [row for row in reader]
+        except Exception:
+            pass
+
+    if not records:
+        return jsonify({
+            "success": False,
+            "detail": "No valid CSV or JSON records found. Provide CSV file upload, JSON array, or csv_text parameter."
+        }), 400
+
+    conn = get_db_connection()
+    res = MandiService.bulk_upload_rates(conn, records)
+    conn.close()
+
+    return jsonify(res)
 
 @app.route("/api/mandi/states", methods=["GET"])
 def get_states():

@@ -171,6 +171,44 @@ export default function Home() {
   const [reservationSuccess, setReservationSuccess] = useState<any>(null);
   const [reservationPhone, setReservationPhone] = useState("");
 
+  // Admin upload states
+  const [showAdminUploadModal, setShowAdminUploadModal] = useState(false);
+  const [csvInput, setCsvInput] = useState("");
+  const [uploadStatus, setUploadStatus] = useState<any>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleAdminUpload = (csvText?: string) => {
+    const payloadCsv = csvText || csvInput;
+    if (!payloadCsv.trim()) {
+      alert("Please paste CSV data or select a CSV file.");
+      return;
+    }
+    setIsUploading(true);
+    setUploadStatus(null);
+
+    const formData = new FormData();
+    formData.append("csv_text", payloadCsv);
+
+    fetch(`${BACKEND_URL}/api/admin/upload-rates`, {
+      method: "POST",
+      body: formData
+    })
+      .then(res => res.json())
+      .then(data => {
+        setIsUploading(false);
+        setUploadStatus(data);
+        if (data.success) {
+          fetch(`${BACKEND_URL}/api/mandi/states`)
+            .then(r => r.json())
+            .then(st => setStates(st));
+        }
+      })
+      .catch(() => {
+        setIsUploading(false);
+        setUploadStatus({ success: false, detail: "Error connecting to backend server." });
+      });
+  };
+
   // Assistant states
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
@@ -769,7 +807,19 @@ export default function Home() {
         {/* TAB 2: Mandi Rates */}
         {activeTab === "mandi" && (
           <div className="flex-1 overflow-y-auto space-y-4">
-            <h2 className="text-lg font-extrabold text-gray-900 border-l-4 border-primary-600 pl-2">{t.mandi_header}</h2>
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-extrabold text-gray-900 border-l-4 border-primary-600 pl-2">{t.mandi_header}</h2>
+              <button 
+                onClick={() => {
+                  setShowAdminUploadModal(true);
+                  setUploadStatus(null);
+                  setCsvInput("");
+                }}
+                className="text-xs bg-primary-600 hover:bg-primary-700 text-white font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition cursor-pointer"
+              >
+                📤 Upload Rates (CSV)
+              </button>
+            </div>
             
             {/* Selectors */}
             <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-3">
@@ -1220,6 +1270,112 @@ export default function Home() {
                   )}
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Bulk Rate Upload Modal Overlay */}
+      {showAdminUploadModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto flex flex-col">
+            
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📤</span>
+                <h3 className="font-bold text-gray-900">Admin: Bulk Upload Local Mandi Rates</h3>
+              </div>
+              <button 
+                onClick={() => setShowAdminUploadModal(false)}
+                className="text-gray-400 hover:text-gray-800"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <p className="text-xs text-gray-600">
+                Upload or paste local mandi rates in CSV or Excel format. Missing mandis or commodities will be auto-created.
+              </p>
+
+              {/* Sample CSV Download Helper */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-900">
+                <p className="font-bold mb-1">💡 Expected CSV Format:</p>
+                <code className="block bg-white p-2 rounded border border-blue-200 text-[11px] font-mono text-gray-800 overflow-x-auto">
+                  state,district,mandi_name,commodity,date,min_price,modal_price,max_price<br/>
+                  Karnataka,Shivamogga,Shimoga APMC,Maize,2026-09-05,2200,2350,2500<br/>
+                  Maharashtra,Pune,Pune APMC (Gultekdi),Wheat,2026-09-05,2400,2550,2700
+                </code>
+              </div>
+
+              {/* File Upload input */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Option 1: Select CSV File</label>
+                <input 
+                  type="file" 
+                  accept=".csv,.txt"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (evt) => {
+                        const txt = evt.target?.result as string;
+                        setCsvInput(txt);
+                      };
+                      reader.readAsText(file);
+                    }
+                  }}
+                  className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 cursor-pointer"
+                />
+              </div>
+
+              {/* CSV Textarea input */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Option 2: Or Paste CSV / Data Text Directly</label>
+                <textarea 
+                  rows={5}
+                  value={csvInput}
+                  onChange={(e) => setCsvInput(e.target.value)}
+                  placeholder="state,district,mandi_name,commodity,date,min_price,modal_price,max_price&#10;Karnataka,Shivamogga,Shimoga APMC,Maize,2026-09-05,2200,2350,2500"
+                  className="w-full border border-gray-300 rounded-lg p-2 text-xs font-mono text-gray-900 focus:outline-none focus:border-primary-500"
+                />
+              </div>
+
+              {/* Upload Feedback */}
+              {uploadStatus && (
+                <div className={`p-3 rounded-lg text-xs font-semibold ${uploadStatus.success ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+                  {uploadStatus.success ? (
+                    <div>
+                      ✅ Successfully processed {uploadStatus.processed} records!
+                      {uploadStatus.errors && uploadStatus.errors.length > 0 && (
+                        <div className="mt-1 text-[11px] text-amber-700">
+                          Warnings/Errors: {uploadStatus.errors.join(", ")}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div>❌ Error: {uploadStatus.detail || "Failed to upload rates"}</div>
+                  )}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 justify-end pt-2">
+                <button 
+                  onClick={() => setShowAdminUploadModal(false)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-50"
+                >
+                  Close
+                </button>
+                <button 
+                  onClick={() => handleAdminUpload()}
+                  disabled={isUploading}
+                  className="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold rounded-lg disabled:opacity-50 flex items-center gap-1 cursor-pointer"
+                >
+                  {isUploading ? "Uploading..." : "Upload & Save Rates"}
+                </button>
+              </div>
+
             </div>
           </div>
         </div>

@@ -1,0 +1,9 @@
+state,district,mandi_name,commodity,date,min_price,modal_price,max_price
+Karnataka,Shivamogga,Shimoga APMC,Maize,2026-09-05,2200,2350,2500
+Maharashtra,Nashik,Lasalgaon APMC,Onion,2026-09-05,1800,2100,2400
+Madhya Pradesh,Indore,Indore APMC (Choithram),Wheat,2026-09-05,2400,2550,2700
+Karnataka,Bengaluru,Yeshwanthpur APMC,Wheat,2026-09-05,2480,2600,2750
+Uttar Pradesh,Agra,Agra APMC,Potato,2026-09-05,1200,1400,1600
+Punjab,Ludhiana,Ludhiana APMC,Paddy(Dhan),2026-09-05,2100,2300,2450
+Gujarat,Rajkot,Rajkot APMC,Cotton,2026-09-05,6800,7200,7600
+Rajasthan,Jaipur,Jaipur APMC,Mustard,2026-09-05,5100,5450,5700

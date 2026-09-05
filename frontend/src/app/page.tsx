@@ -1308,12 +1308,21 @@ export default function Home() {
               </p>
 
               {/* Sample CSV Download Helper */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-900">
-                <p className="font-bold mb-1">💡 Expected CSV Format:</p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-900 space-y-2">
+                <div className="flex justify-between items-center">
+                  <p className="font-bold">💡 Expected CSV Format:</p>
+                  <a 
+                    href="/sample_mandi_rates.csv" 
+                    download="sample_mandi_rates.csv"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] px-2.5 py-1 rounded flex items-center gap-1 shadow-sm transition cursor-pointer"
+                  >
+                    📥 Download Sample CSV
+                  </a>
+                </div>
                 <code className="block bg-white p-2 rounded border border-blue-200 text-[11px] font-mono text-gray-800 overflow-x-auto">
                   state,district,mandi_name,commodity,date,min_price,modal_price,max_price<br/>
                   Karnataka,Shivamogga,Shimoga APMC,Maize,2026-09-05,2200,2350,2500<br/>
-                  Maharashtra,Pune,Pune APMC (Gultekdi),Wheat,2026-09-05,2400,2550,2700
+                  Maharashtra,Nashik,Lasalgaon APMC,Onion,2026-09-05,1800,2100,2400
                 </code>
               </div>
 

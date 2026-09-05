@@ -119,7 +119,17 @@ client.on('message_create', async (msg) => {
     if (msg.hasMedia && (msg.type === 'ptt' || msg.type === 'audio')) {
       console.log(`[INCOMING VOICE NOTE] Voice note received from ${userPhone}... downloading audio`);
       try {
-        const media = await msg.downloadMedia();
+        let media = null;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            media = await msg.downloadMedia();
+            if (media && media.data) break;
+          } catch (dlErr) {
+            console.log(`[VOICE NOTE DOWNLOAD ATTEMPT ${attempt} FAILED] ${dlErr.message || dlErr}`);
+            await new Promise(r => setTimeout(r, 600));
+          }
+        }
+
         if (media && media.data) {
           console.log(`[VOICE NOTE DOWNLOADED] Size: ${media.data.length} chars, Mime: ${media.mimetype}`);
           

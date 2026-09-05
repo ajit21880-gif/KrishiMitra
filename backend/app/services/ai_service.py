@@ -12,25 +12,39 @@ LANG_PATTERNS = {
 }
 
 COMMODITY_KEYWORDS = {
-    "Maize": ["maize", "corn", "maze", "ಮಕ್ಕೆಜೋಳ", "ಮೆಕ್ಕೆಜೋಳ", "ಮಕ್ಕ ಜೋಳ", "ಜೋಳ", "मक्का", "மக்காச்சோளம்"],
+    "Sugar": ["sugar", "shakkar", "cheeni", "chini", "चीनी", "शक्कर", "गुड़", "ಗುಡ", "ಸಕ್ಕರೆ", "ಬೆಲ್ಲ", "சர்க்கரை", "வெல்லம்", "gur", "jaggery"],
+    "Maize": ["maize", "corn", "maze", "ಮಕ್ಕೆಜೋಳ", "ಮೆಕ್ಕೆಜೋಳ", "ಮಕ್ಕ ಜೋಳ", "ಜೋಳ", "मक्का", "मक्के", "मक्की", "மக்காச்சோளம்"],
     "Wheat": ["wheat", "wheet", "gehun", "gehu", "गेहूं", "कनक", "ಗೋಧಿ", "கோதுமை"],
-    "Paddy (Rice)": ["paddy", "rice", "धान", "ಚಾವಲ್", "ಭತ್ತ", "ರೈಸ್", "அரிசி", "நெல்"],
+    "Paddy (Rice)": ["paddy", "rice", "chawal", "धान", "चावल", "ಚಾವಲ್", "ಭತ್ತ", "ರೈಸ್", "ಅಕ್ಕಿ", "அரிசி", "நெல்"],
     "Soyabean": ["soyabean", "soybean", "सोयाबीन", "ಸೋಯಾಬೀನ್", "சோயாபீன்"],
-    "Onion": ["onion", "प्याज", "कांदा", "ಈರುಳ್ಳಿ", "வெங்காயம்"],
-    "Tomato": ["tomato", "टमाटर", "ಟೊಮೆಟೊ", "தக்காளி"],
+    "Onion": ["onion", "onions", "pyaj", "pyaaz", "प्याज", "कांदा", "ಈರುಳ್ಳಿ", "வெங்காயம்"],
+    "Tomato": ["tomato", "tomatoes", "tamatar", "टमाटर", "ಟೊಮೆಟೊ", "தக்காளி"],
+    "Potato": ["potato", "potatoes", "aloo", "alu", "आलू", "ಆಲೂಗಡ್ಡೆ", "உருளைக்கிழங்கு"],
     "Toor Dal": ["toor dal", "toor", "arhar", "arhar dal", "ತೊಗರಿ ಬೇಳೆ", "ತೊಗರಿ", "तुअर", "अरहर", "துவரம் பருப்பு"],
-    "Cotton": ["cotton", "kapas", "ಹತ್ತಿ", "कपास", "பருத்தி"],
-    "Gram (Chana)": ["gram", "chana", "चना", "ಕಡಲೆ", "ಕಡಲೆ ಬೇಳೆ", "கொண்டைக்கடலை"]
+    "Cotton": ["cotton", "kapas", "हत्ति", "ಹತ್ತಿ", "कपास", "பருத்தி"],
+    "Gram (Chana)": ["gram", "chana", "चना", "चना दाल", "ಕಡಲೆ", "ಕಡಲೆ ಬೇಳೆ", "கொண்டைக்கடலை"],
+    "Apple": ["apple", "apples", "seb", "सेव", "सेब", "ಸೇಬು", "ஆப்பிள்"],
+    "Banana": ["banana", "bananas", "kela", "केला", "ಬಾಳೆಹಣ್ಣು", "வாழைப்பழம்"],
+    "Mustard": ["mustard", "sarson", "सरसों", "ಸಾಸಿವೆ", "கடுகு"],
+    "Groundnut": ["groundnut", "peanut", "moongphali", "मूंगफली", "ಕಡಲೆಕಾಯಿ", "நிலக்கடலை"],
+    "Ginger": ["ginger", "adrak", "अदरक", "ಶುಂಟಿ", "இஞ்சி"],
+    "Garlic": ["garlic", "lahsun", "लहसुन", "ಬೆಳ್ಳುಳ್ಳಿ", "பூண்டு"],
+    "Chilli": ["chilli", "chili", "mirchi", "मिर्च", "ಮೆಣಸಿನಕಾಯಿ", "மிளகாய்"]
 }
 
 LOCATION_KEYWORDS = {
+    "Delhi": {"district": "Delhi", "state": "Delhi", "keywords": ["delhi", "new delhi", "दिल्ली", "ದೆಹಲಿ", "டெல்லி", "azadpur"]},
+    "Ranchi": {"district": "Ranchi", "state": "Jharkhand", "keywords": ["jharkhand", "ranchi", "झारखंड", "रांची", "ஜார்க்கண்ட்"]},
     "Shivamogga": {"district": "Shivamogga", "state": "Karnataka", "keywords": ["shimoga", "shivamogga", "ಶಿವಮೊಗ್ಗ"]},
     "Davanagere": {"district": "Davanagere", "state": "Karnataka", "keywords": ["davanagere", "ದಾವಣಗೆರೆ"]},
     "Bengaluru": {"district": "Bengaluru", "state": "Karnataka", "keywords": ["bengaluru", "bangalore", "ಬೆಂಗಳೂರು", "yeshwanthpur", "பெங்களூரு"]},
     "Indore": {"district": "Indore", "state": "Madhya Pradesh", "keywords": ["indore", "इंदौर"]},
     "Ujjain": {"district": "Ujjain", "state": "Madhya Pradesh", "keywords": ["ujjain", "उज्जैन"]},
     "Nashik": {"district": "Nashik", "state": "Maharashtra", "keywords": ["lasalgaon", "nashik", "नाशिक", "लासलगाव"]},
-    "Pune": {"district": "Pune", "state": "Maharashtra", "keywords": ["pune", "पुणे"]}
+    "Pune": {"district": "Pune", "state": "Maharashtra", "keywords": ["pune", "पुणे"]},
+    "Mumbai": {"district": "Mumbai", "state": "Maharashtra", "keywords": ["mumbai", "vashi", "मुंबई"]},
+    "Jaipur": {"district": "Jaipur", "state": "Rajasthan", "keywords": ["jaipur", "जयपुर"]},
+    "Lucknow": {"district": "Lucknow", "state": "Uttar Pradesh", "keywords": ["lucknow", "up", "uttar pradesh", "लखनऊ"]}
 }
 
 class AIService:
@@ -45,7 +59,7 @@ class AIService:
     @staticmethod
     def parse_query_rule_based(text: str) -> Dict[str, Any]:
         """Simple, robust regex and keyword based fallback intent parser"""
-        text_lower = text.lower()
+        text_lower = text.lower().strip()
         detected_lang = AIService.detect_language(text)
         
         # 1. Detect Intent
@@ -94,6 +108,29 @@ class AIService:
                     break
             if extracted_district:
                 break
+        
+        # 4. Fallback Dynamic Extract: "price/rate of <X> in <Y>"
+        if not extracted_commodity or not extracted_district:
+            match = re.search(r"(?:price|rate|cost|भाव|दाम|ರೇಟ್|ಬೆಲೆ|விலை)\s+(?:of|for)?\s*([a-zA-Z\u0900-\u097f\u0c80-\u0cff\u0b80-\u0bff]+)\s+(?:in|at|में|ನಲ್ಲಿ|இல்)\s+([a-zA-Z\u0900-\u097f\u0c80-\u0cff\u0b80-\u0bff]+)", text_lower)
+            if match:
+                c_c = match.group(1).strip().title()
+                l_c = match.group(2).strip().title()
+                if not extracted_commodity:
+                    extracted_commodity = c_c
+                if not extracted_district:
+                    extracted_district = l_c
+
+        # 5. Handle single-word user followups e.g. "Sugar", "Corn", "Delhi"
+        if not extracted_commodity and len(text_lower.split()) <= 2:
+            w = text_lower.strip()
+            if w in ["sugar", "gur", "jaggery", "chini"]:
+                extracted_commodity = "Sugar"
+            elif w in ["corn", "maize"]:
+                extracted_commodity = "Maize"
+            elif w in ["rice", "paddy", "chawal"]:
+                extracted_commodity = "Paddy (Rice)"
+            elif w in ["wheat", "gehun"]:
+                extracted_commodity = "Wheat"
                 
         return {
             "intent": intent,

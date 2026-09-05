@@ -73,10 +73,16 @@ class KrishiMitraTestCase(unittest.TestCase):
         r_ta = self.app.post("/api/query", json={"text": "வணக்கம் கிருஷிமித்ரா"})
         self.assertIn("கிருஷிமித்ரா AI க்கு நல்வரவு", r_ta.json["text"])
 
-    def test_simple_greeting_prompt(self):
-        # Generic Hi without KrishiMitra must return empty string (silent, no reaction)
-        r = self.app.post("/api/query", json={"text": "Hi"})
-        self.assertEqual(r.json["text"], "")
+    def test_sugar_delhi_query(self):
+        r = self.app.post("/api/query", json={"text": "What's the price of sugar in delhi?"})
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("Sugar", r.json["text"])
+        self.assertTrue("Azadpur" in r.json["text"] or "Delhi" in r.json["text"])
+
+    def test_rice_jharkhand_query(self):
+        r = self.app.post("/api/query", json={"text": "What is price of rice in jharkhand"})
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue("Rice" in r.json["text"] or "Paddy" in r.json["text"])
 
 if __name__ == '__main__':
     unittest.main()

@@ -49,10 +49,8 @@ Thumbs.db
 # OS / editor
 .vscode/
 .idea/
-mobile/node_modules/
 **/node_modules/
-
-# Mobile native folders
-mobile/android/
-mobile/ios/
-mobile/.expo/
+# WhatsApp Gateway
+whatsapp-gateway/node_modules/
+whatsapp-gateway/.wwebjs_auth/
+whatsapp-gateway/uploads/

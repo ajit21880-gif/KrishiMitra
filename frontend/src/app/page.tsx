@@ -782,7 +782,7 @@ export default function Home() {
               onChange={(e) => {
                 const selectedVal = e.target.value;
                 setLang(selectedVal);
-                if (selectedVal !== "en" && selectedVal !== "hi" && selectedVal !== "kn") {
+                if (selectedVal !== "en" && selectedVal !== "hi" && selectedVal !== "kn" && selectedVal !== "ta") {
                   alert(selectedVal === "other" 
                     ? "Regional translation support is being set up. Defaulting to English." 
                     : `Translation support for this language is loading. Defaulting to English for now!`);

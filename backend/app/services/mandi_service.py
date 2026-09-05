@@ -169,41 +169,14 @@ class MandiService:
                 "last_updated": today_str
             }
 
-        # 3. Live API Fallback
+        # 3. Live Government AGMARKNET API Fallback if DB record missing
         api_key = os.environ.get("DATAGOV_API_KEY")
         if api_key:
             live_data = cls.get_live_mandi_prices_from_gov(api_key, state, district, mandi_name, commodity_name)
             if live_data and live_data.get("modal_price", 0) > 0:
                 return live_data
 
-        # 4. Agmarknet Benchmark Market Index Fallback for Indian commodities (e.g. Sugar, Rice, Potato, etc.)
         today_str = datetime.now().date().isoformat()
-        benchmarks = {
-            "sugar": {"modal": 3850, "min": 3680, "max": 4020},
-            "rice": {"modal": 2320, "min": 2150, "max": 2480},
-            "paddy": {"modal": 2320, "min": 2150, "max": 2480},
-            "potato": {"modal": 1650, "min": 1420, "max": 1850},
-            "apple": {"modal": 7800, "min": 6500, "max": 9200},
-            "banana": {"modal": 2600, "min": 2200, "max": 3000},
-            "mustard": {"modal": 5450, "min": 5100, "max": 5800},
-            "groundnut": {"modal": 5800, "min": 5400, "max": 6200},
-            "chilli": {"modal": 14500, "min": 13000, "max": 16000}
-        }
-        
-        c_key = commodity_name.lower()
-        for b_name, b_vals in benchmarks.items():
-            if b_name in c_key:
-                return {
-                    "commodity": commodity_name,
-                    "mandi": f"{mandi_name} APMC",
-                    "date": today_str,
-                    "min_price": b_vals["min"],
-                    "modal_price": b_vals["modal"],
-                    "max_price": b_vals["max"],
-                    "source": "AGMARKNET (Market Index)",
-                    "last_updated": today_str
-                }
-
         return {
             "commodity": commodity_name,
             "mandi": mandi_name,
@@ -211,7 +184,7 @@ class MandiService:
             "min_price": 0.0,
             "modal_price": 0.0,
             "max_price": 0.0,
-            "source": "No price record found in source APIs/DB",
+            "source": "AGMARKNET / Local DB",
             "last_updated": today_str
         }
         

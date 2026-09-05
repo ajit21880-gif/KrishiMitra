@@ -56,11 +56,11 @@ class AIService:
                 return lang
         return "en"
 
-    @staticmethod
-    def parse_query_rule_based(text: str) -> Dict[str, Any]:
-        """Simple, robust regex and keyword based fallback intent parser"""
+    @classmethod
+    def parse_query_rule_based(cls, text: str, db: Optional[Any] = None) -> Dict[str, Any]:
+        """Dynamic database-driven intent and entity parser"""
         text_lower = text.lower().strip()
-        detected_lang = AIService.detect_language(text)
+        detected_lang = cls.detect_language(text)
         
         # 1. Detect Intent
         intent = "price" # Default
@@ -70,7 +70,7 @@ class AIService:
         buyer_words = ["sell", "buyer", "purchase", "wholesaler", "trader", "बेचना", "खरीददार", "व्यापारी", "ಮಾರಾಟ", "ಖರೀದಿದಾರ", "ವ್ಯಾಪಾರಿ", "கொள்முதல்"]
         weather_words = ["weather", "rain", "monsoon", "temperature", "मौसम", "बारिश", "ಮಳೆ", "ಹವಾಮಾನ", "வானிலை"]
         msp_words = ["msp", "support price", "एमएसपी", "समर्थन मूल्य", "ಬೆಂಬಲ ಬೆಲೆ", "ஆதரவு விலை"]
-        scheme_words = ["scheme", "kisan", "yojana", "योजना", "ಯೋಜನೆ", "திட்டம்"]
+        scheme_words = ["scheme", "kisan", "yojana", "योजना", "ಯೋಜನೆ", "ದಿட்டம்"]
 
         if any(w in text_lower for w in list_words):
             intent = "list_commodities"
@@ -85,30 +85,66 @@ class AIService:
         elif any(w in text_lower for w in scheme_words):
             intent = "scheme"
 
-        # 2. Extract Commodity
         extracted_commodity = None
-        for comm, kw_list in COMMODITY_KEYWORDS.items():
-            for kw in kw_list:
-                pattern = rf"(?:\s|^){re.escape(kw)}(?:\s|$|[.,?!])"
-                if re.search(pattern, text_lower):
-                    extracted_commodity = comm
-                    break
-            if extracted_commodity:
-                break
-                
-        # 3. Extract Location
         extracted_district = None
         extracted_state = None
-        for loc, info in LOCATION_KEYWORDS.items():
-            for kw in info["keywords"]:
-                pattern = rf"(?:\s|^){re.escape(kw)}(?:\s|$|[.,?!])"
-                if re.search(pattern, text_lower):
-                    extracted_district = info["district"]
-                    extracted_state = info["state"]
+
+        # 2. Dynamic DB matching if SQLite connection provided
+        if db:
+            try:
+                cursor = db.cursor()
+                cursor.execute("SELECT DISTINCT commodity_name FROM commodities")
+                rows = cursor.fetchall()
+                for r in rows:
+                    cname = r["commodity_name"] if hasattr(r, "keys") else r[0]
+                    if cname and cname.lower() in text_lower:
+                        extracted_commodity = cname
+                        break
+                        
+                cursor.execute("SELECT DISTINCT state, district, mandi_name FROM mandis")
+                m_rows = cursor.fetchall()
+                for r in m_rows:
+                    st = r["state"] if hasattr(r, "keys") else r[0]
+                    dt = r["district"] if hasattr(r, "keys") else r[1]
+                    mn = r["mandi_name"] if hasattr(r, "keys") else r[2]
+                    
+                    if dt and dt.lower() in text_lower:
+                        extracted_district = dt
+                        extracted_state = st
+                        break
+                    elif st and st.lower() in text_lower:
+                        extracted_district = st
+                        extracted_state = st
+                        break
+                    elif mn and mn.lower() in text_lower:
+                        extracted_district = dt or mn
+                        extracted_state = st
+                        break
+            except Exception as e:
+                print(f"Dynamic DB parse error: {e}")
+
+        # 3. Keyword dictionary matching fallback
+        if not extracted_commodity:
+            for comm, kw_list in COMMODITY_KEYWORDS.items():
+                for kw in kw_list:
+                    pattern = rf"(?:\s|^){re.escape(kw)}(?:\s|$|[.,?!])"
+                    if re.search(pattern, text_lower):
+                        extracted_commodity = comm
+                        break
+                if extracted_commodity:
                     break
-            if extracted_district:
-                break
-        
+
+        if not extracted_district:
+            for loc, info in LOCATION_KEYWORDS.items():
+                for kw in info["keywords"]:
+                    pattern = rf"(?:\s|^){re.escape(kw)}(?:\s|$|[.,?!])"
+                    if re.search(pattern, text_lower):
+                        extracted_district = info["district"]
+                        extracted_state = info["state"]
+                        break
+                if extracted_district:
+                    break
+
         # 4. Fallback Dynamic Extract: "price/rate of <X> in <Y>"
         if not extracted_commodity or not extracted_district:
             match = re.search(r"(?:price|rate|cost|भाव|दाम|ರೇಟ್|ಬೆಲೆ|விலை)\s+(?:of|for)?\s*([a-zA-Z\u0900-\u097f\u0c80-\u0cff\u0b80-\u0bff]+)\s+(?:in|at|में|ನಲ್ಲಿ|இல்)\s+([a-zA-Z\u0900-\u097f\u0c80-\u0cff\u0b80-\u0bff]+)", text_lower)
@@ -215,14 +251,14 @@ class AIService:
         return None
 
     @classmethod
-    def parse_query(cls, text: str) -> Dict[str, Any]:
-        """Entrypoint for parsing query text. Falls back to rules if API key is not present."""
+    def parse_query(cls, text: str, db: Optional[Any] = None) -> Dict[str, Any]:
+        """Entrypoint for parsing query text. Falls back to dynamic DB parsing if API key is not present."""
         api_key = os.environ.get("GEMINI_API_KEY")
         if api_key:
             parsed = cls.parse_query_with_llm(text, api_key)
             if parsed:
                 return parsed
-        return cls.parse_query_rule_based(text)
+        return cls.parse_query_rule_based(text, db=db)
 
     @staticmethod
     def speech_to_text(audio_bytes: bytes, mime_type: str = "audio/ogg") -> str:

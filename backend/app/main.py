@@ -24,118 +24,138 @@ init_db()
 
 def start_background_price_sync():
     def sync_worker():
-        # Let's wait 10 seconds for Flask to bind first
         time.sleep(10)
         while True:
-            api_key = os.environ.get("DATAGOV_API_KEY")
-            if not api_key:
-                print("[Price Syncer] No DATAGOV_API_KEY found, skipping background sync.")
-                time.sleep(3600)
-                continue
-                
-            print("[Price Syncer] Starting background daily price sync from Data.gov...")
+            api_key = os.environ.get("DATAGOV_API_KEY", "579b464db66ec23bdd000001a40e8a53305b4bcb40409d2efb7d48dc")
+            print("[All-India Syncer] Starting chunked background price sync across all Indian mandis...")
+            
+            rid = "9ef84268-d588-465a-a308-a864a43d0070"
+            url = f"https://api.data.gov.in/resource/{rid}"
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "application/json"
+            }
+            
+            chunk_size = 100
+            total_synced = 0
+            max_pages = 20  # 20 pages * 100 = 2,000 live All-India records per sync run!
+            
             try:
-                # Query Data.gov in bulk for 1000 latest records
-                url = "https://api.data.gov.in/resource/9ef84281-22f3-497d-aa5d-8c6c52d77290"
-                params = {
-                    "api-key": api_key,
-                    "format": "json",
-                    "limit": 1000
-                }
-                # Use a larger timeout for the slow gov api
-                response = requests.get(url, params=params, timeout=25)
-                if response.status_code == 200:
-                    data = response.json()
-                    records = data.get("records", [])
-                    print(f"[Price Syncer] Successfully fetched {len(records)} records from Data.gov.")
+                conn = get_db_connection()
+                cursor = conn.cursor()
+
+                for page in range(max_pages):
+                    offset = page * chunk_size
+                    params = {
+                        "api-key": api_key,
+                        "format": "json",
+                        "limit": chunk_size,
+                        "offset": offset
+                    }
                     
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    
-                    # Fetch all mandis and commodities from DB
-                    cursor.execute("SELECT id, state, district, mandi_name FROM mandis")
-                    db_mandis = cursor.fetchall()
-                    
-                    cursor.execute("SELECT id, commodity_name FROM commodities")
-                    db_commodities = cursor.fetchall()
-                    
-                    commodity_map = {c["commodity_name"].lower(): c["id"] for c in db_commodities}
-                    
-                    success_count = 0
-                    for r in records:
-                        comm_gov = r.get("commodity", "").strip().lower()
-                        matched_comm_id = None
-                        for c_name, c_id in commodity_map.items():
-                            if c_name in comm_gov or comm_gov in c_name:
-                                matched_comm_id = c_id
-                                break
-                                
-                        if not matched_comm_id:
+                    try:
+                        resp = requests.get(url, params=params, headers=headers, timeout=12)
+                        if resp.status_code != 200:
+                            print(f"[All-India Syncer] Page {page+1} returned HTTP {resp.status_code}, skipping page.")
+                            time.sleep(1)
                             continue
                             
-                        state_gov = r.get("state", "").strip().lower()
-                        district_gov = r.get("district", "").strip().lower()
-                        market_gov = r.get("market", "").strip().lower()
-                        
-                        matched_mandi_id = None
-                        for m in db_mandis:
-                            if m["state"].strip().lower() == state_gov:
-                                clean_db_mandi = m["mandi_name"].lower().replace("apmc", "").replace("market", "").strip()
-                                clean_gov_market = market_gov.replace("apmc", "").replace("market", "").strip()
-                                if clean_db_mandi in clean_gov_market or clean_gov_market in clean_db_mandi:
-                                    matched_mandi_id = m["id"]
-                                    break
-                                    
-                        if not matched_mandi_id:
-                            continue
+                        data = resp.json()
+                        records = data.get("records", [])
+                        if not records:
+                            print(f"[All-India Syncer] Page {page+1} returned 0 records. End of data reached.")
+                            break
                             
-                        date_str = r.get("arrival_date", datetime.now().date().isoformat())
-                        
-                        # Clean and parse date string format DD/MM/YYYY to YYYY-MM-DD if needed
-                        if "/" in date_str:
+                        page_synced = 0
+                        for r in records:
+                            state_gov = str(r.get("state", "")).strip()
+                            district_gov = str(r.get("district", state_gov)).strip()
+                            market_gov = str(r.get("market", "")).strip()
+                            comm_gov = str(r.get("commodity", "")).strip()
+                            date_str = str(r.get("arrival_date", datetime.now().date().isoformat())).strip()
+                            
+                            if "/" in date_str:
+                                try:
+                                    parts = date_str.split("/")
+                                    if len(parts) == 3:
+                                        date_str = f"{parts[2]}-{parts[1]}-{parts[0]}"
+                                except Exception:
+                                    pass
+
                             try:
-                                parts = date_str.split("/")
-                                if len(parts) == 3:
-                                    date_str = f"{parts[2]}-{parts[1]}-{parts[0]}"
+                                min_p = float(r.get("min_price", 0))
+                                modal_p = float(r.get("modal_price", 0))
+                                max_p = float(r.get("max_price", 0))
                             except Exception:
-                                pass
-                                
-                        try:
-                            min_p = float(r.get("min_price", 0))
-                            modal_p = float(r.get("modal_price", 0))
-                            max_p = float(r.get("max_price", 0))
-                        except Exception:
-                            continue
+                                continue
+
+                            if not state_gov or not market_gov or not comm_gov or modal_p <= 0:
+                                continue
+
+                            # 1. Match or Auto-Create Mandi for ANY Indian state
+                            cursor.execute(
+                                "SELECT id FROM mandis WHERE state LIKE ? AND (mandi_name LIKE ? OR mandi_name LIKE ?)",
+                                (f"%{state_gov}%", f"%{market_gov}%", f"%{market_gov.replace('APMC','').strip()}%")
+                            )
+                            mandi_row = cursor.fetchone()
                             
-                        # Check if price already exists
-                        cursor.execute(
-                            "SELECT id FROM daily_prices WHERE mandi_id = ? AND commodity_id = ? AND date = ?",
-                            (matched_mandi_id, matched_comm_id, date_str)
-                        )
-                        existing = cursor.fetchone()
-                        
-                        if existing:
+                            if not mandi_row:
+                                mandi_id = str(uuid.uuid4())
+                                cursor.execute(
+                                    "INSERT INTO mandis (id, state, district, mandi_name, apmc_code, latitude, longitude) VALUES (?, ?, ?, ?, ?, 0.0, 0.0)",
+                                    (mandi_id, state_gov, district_gov or state_gov, market_gov, f"GOV-{uuid.uuid4().hex[:6]}")
+                                )
+                            else:
+                                mandi_id = mandi_row["id"]
+
+                            # 2. Match or Auto-Create Commodity
+                            cursor.execute("SELECT id FROM commodities WHERE commodity_name LIKE ?", (f"%{comm_gov}%",))
+                            comm_row = cursor.fetchone()
+                            
+                            if not comm_row:
+                                comm_id = str(uuid.uuid4())
+                                cursor.execute(
+                                    "INSERT INTO commodities (id, commodity_name, local_name, category) VALUES (?, ?, ?, 'General')",
+                                    (comm_id, comm_gov, comm_gov)
+                                )
+                            else:
+                                comm_id = comm_row["id"]
+
+                            # 3. Upsert Daily Price
                             cursor.execute(
-                                "UPDATE daily_prices SET min_price = ?, modal_price = ?, max_price = ?, source = 'AGMARKNET (Synced Live)' WHERE id = ?",
-                                (min_p, modal_p, max_p, existing["id"])
+                                "SELECT id FROM daily_prices WHERE mandi_id = ? AND commodity_id = ? AND date = ?",
+                                (mandi_id, comm_id, date_str)
                             )
-                        else:
-                            cursor.execute(
-                                "INSERT INTO daily_prices (id, mandi_id, commodity_id, date, min_price, modal_price, max_price, source) VALUES (?, ?, ?, ?, ?, ?, ?, 'AGMARKNET (Synced Live)')",
-                                (str(uuid.uuid4()), matched_mandi_id, matched_comm_id, date_str, min_p, modal_p, max_p)
-                            )
-                        success_count += 1
-                        
-                    conn.commit()
-                    conn.close()
-                    print(f"[Price Syncer] Successfully synced and inserted/updated {success_count} prices in DB.")
-                    time.sleep(43200)
-                else:
-                    print(f"[Price Syncer] API returned error {response.status_code}: {response.text}")
-                    time.sleep(300)
+                            existing = cursor.fetchone()
+                            
+                            if existing:
+                                cursor.execute(
+                                    "UPDATE daily_prices SET min_price = ?, modal_price = ?, max_price = ?, source = 'AGMARKNET (Synced Live)' WHERE id = ?",
+                                    (min_p, modal_p, max_p, existing["id"])
+                                )
+                            else:
+                                cursor.execute(
+                                    "INSERT INTO daily_prices (id, mandi_id, commodity_id, date, min_price, modal_price, max_price, source) VALUES (?, ?, ?, ?, ?, ?, ?, 'AGMARKNET (Synced Live)')",
+                                    (str(uuid.uuid4()), mandi_id, comm_id, date_str, min_p, modal_p, max_p)
+                                )
+                            page_synced += 1
+
+                        conn.commit()
+                        total_synced += page_synced
+                        time.sleep(0.3)
+
+                    except Exception as err:
+                        print(f"[All-India Syncer] Error on page {page+1}: {err}")
+                        time.sleep(1)
+
+                conn.close()
+                print(f"[All-India Syncer] Sync run completed! Total live records updated across India: {total_synced}.")
+                
             except Exception as e:
-                print(f"[Price Syncer] Error during price sync: {e}")
-                time.sleep(300)
+                print(f"[All-India Syncer] Global syncer exception: {e}")
+                
+            # Run scheduled syncs 3 times daily (every 8 hours = 28,800 seconds)
+            time.sleep(28800)
 
     t = threading.Thread(target=sync_worker, daemon=True)
     t.start()

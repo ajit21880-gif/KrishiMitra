@@ -100,6 +100,94 @@ client.on('ready', () => {
   } catch (e) {}
 });
 
+async function fetchVoiceNoteMedia(client, msg) {
+  // Attempt 1: Standard whatsapp-web.js downloadMedia
+  try {
+    const media = await msg.downloadMedia();
+    if (media && media.data) return media;
+  } catch (e) {
+    console.log(`[VOICE NOTE] Standard downloadMedia attempt 1 failed: ${e.message || e}`);
+  }
+
+  // Attempt 2: Direct browser context media resolution & decryption with stage polling
+  try {
+    const msgIdSerialized = msg.id && msg.id._serialized ? msg.id._serialized : null;
+    if (msgIdSerialized) {
+      const browserResult = await client.pupPage.evaluate(async (msgId) => {
+        try {
+          const Collections = window.require('WAWebCollections');
+          let m = Collections.Msg.get(msgId);
+          if (!m) {
+            const fetched = await Collections.Msg.getMessagesById([msgId]);
+            m = fetched?.messages?.[0];
+          }
+          if (!m) return { error: 'Message not found in WAWebCollections' };
+
+          // Trigger download if media stage is not resolved
+          if (m.mediaData && m.mediaData.mediaStage !== 'RESOLVED') {
+            try {
+              await m.downloadMedia({ downloadEvenIfExpensive: true, rmrReason: 1 });
+            } catch (e) {}
+          }
+
+          // Poll up to 15 iterations (7.5 seconds) for media download to complete in browser
+          for (let i = 0; i < 15; i++) {
+            if (m.mediaData && (m.mediaData.mediaStage === 'RESOLVED' || m.mediaData.mediaStage === 'FETCHED')) {
+              break;
+            }
+            await new Promise(r => setTimeout(r, 500));
+          }
+
+          const downloadManager = window.require('WAWebDownloadManager').downloadManager;
+          const mockQpl = { addAnnotations: function() { return this; }, addPoint: function() { return this; } };
+
+          const decryptedMedia = await downloadManager.downloadAndMaybeDecrypt({
+            directPath: m.directPath,
+            encFilehash: m.encFilehash,
+            filehash: m.filehash,
+            mediaKey: m.mediaKey,
+            mediaKeyTimestamp: m.mediaKeyTimestamp,
+            type: m.type,
+            signal: new AbortController().signal,
+            downloadQpl: mockQpl,
+          });
+
+          if (!decryptedMedia) return { error: 'Decryption returned null' };
+          const base64Data = await window.WWebJS.arrayBufferToBase64Async(decryptedMedia);
+
+          return {
+            data: base64Data,
+            mimetype: m.mimetype || 'audio/ogg',
+            filename: m.filename || 'audio.ogg'
+          };
+        } catch (err) {
+          return { error: err.message || String(err) };
+        }
+      }, msgIdSerialized);
+
+      if (browserResult && browserResult.data) {
+        return browserResult;
+      } else if (browserResult && browserResult.error) {
+        console.log(`[VOICE NOTE] Browser download status: ${browserResult.error}`);
+      }
+    }
+  } catch (bErr) {
+    console.log(`[VOICE NOTE] Browser evaluation error: ${bErr.message || bErr}`);
+  }
+
+  // Attempt 3: Final retry after short delay
+  await new Promise(r => setTimeout(r, 1200));
+  try {
+    const refreshedMsg = await client.getMessageById(msg.id._serialized);
+    if (refreshedMsg) {
+      const media = await refreshedMsg.downloadMedia();
+      if (media && media.data) return media;
+    }
+  } catch (e) {}
+
+  return null;
+}
+
 client.on('message_create', async (msg) => {
   try {
     // Ignore status broadcast and group messages
@@ -119,29 +207,7 @@ client.on('message_create', async (msg) => {
     if (msg.hasMedia && (msg.type === 'ptt' || msg.type === 'audio')) {
       console.log(`[INCOMING VOICE NOTE] Voice note received from ${userPhone}... preparing audio download`);
       try {
-        let media = null;
-        // Brief initial delay to allow WhatsApp Web client to initialize media key decryption
-        await new Promise(r => setTimeout(r, 800));
-
-        for (let attempt = 1; attempt <= 5; attempt++) {
-          try {
-            // Re-fetch message if previous attempt failed
-            let targetMsg = msg;
-            if (attempt > 1 && msg.id && msg.id._serialized) {
-              try {
-                const refreshed = await client.getMessageById(msg.id._serialized);
-                if (refreshed) targetMsg = refreshed;
-              } catch (e) {}
-            }
-
-            media = await targetMsg.downloadMedia();
-            if (media && media.data) break;
-          } catch (dlErr) {
-            const errStr = (dlErr && dlErr.message) ? dlErr.message : String(dlErr);
-            console.log(`[VOICE NOTE DOWNLOAD ATTEMPT ${attempt} FAILED] ${errStr}`);
-            await new Promise(r => setTimeout(r, 1000));
-          }
-        }
+        const media = await fetchVoiceNoteMedia(client, msg);
 
         if (media && media.data) {
           console.log(`[VOICE NOTE DOWNLOADED] Size: ${media.data.length} chars, Mime: ${media.mimetype}`);

@@ -174,7 +174,7 @@ _otp_store = {}
 # Simple translations for WhatsApp Responses
 RESPONSES = {
     "en": {
-        "greeting": "Hello! I am KrishiMitra AI, your agricultural assistant.\nHow can I help you today? You can ask about grain rates (e.g., 'Maize rate in Shimoga'), search for fertilizer/seed dealers, or ask about verified buyers.",
+        "greeting": "🌾 *Welcome to KrishiMitra AI!* Your Hyperlocal Agriculture & Mandi Assistant.\nHow can I help you today? You can ask about grain rates (e.g., 'Maize rate in Shimoga'), search for fertilizer/seed dealers, or ask about verified buyers.",
         "location_missing": "To get rates, please tell me your state, district, or APMC mandi name.",
         "commodity_missing": "Which commodity are you interested in? (e.g., Maize, Wheat, Toor Dal, Soyabean, Onion, Tomato, Cotton, Gram)",
         "not_found": "Sorry, I could not find any price records for {commodity} in {mandi}.",
@@ -185,7 +185,7 @@ RESPONSES = {
         "scheme_template": "📋 *Government Scheme: PM-Kisan Samman Nidhi*\nUnder this scheme, all landholding farmers' families receive an financial benefit of ₹6,000 per year in three equal installments.\nVerify your PM-Kisan status at:\nhttps://pmkisan.gov.in/"
     },
     "hi": {
-        "greeting": "नमस्ते! मैं कृषिमित्र एआई हूँ, आपका कृषि सहायक।\nआज मैं आपकी क्या मदद कर सकता हूँ? आप अनाज के भाव (जैसे 'इंदौर में गेहूं का भाव'), उर्वरक/बीज विक्रेताओं की खोज, या खरीदारों के बारे में पूछ सकते हैं।",
+        "greeting": "🌾 *कृषिमित्र एआई में आपका स्वागत है!* आपका कृषि सहायक।\nआज मैं आपकी क्या मदद कर सकता हूँ? आप फसल का भाव (जैसे 'इंदौर में गेहूं का भाव'), उर्वरक/बीज विक्रेताओं की खोज, या खरीदारों के बारे में पूछ सकते हैं।",
         "location_missing": "भाव जानने के लिए, कृपया मुझे अपना राज्य, जिला या एपीएमसी मंडी का नाम बताएं।",
         "commodity_missing": "आप किस फसल का भाव जानना चाहते हैं? (जैसे मक्का, गेहूं, तुअर दाल, सोयाबीन, प्याज, टमाटर, कपास, चना)",
         "not_found": "क्षमा करें, मुझे {mandi} में {commodity} के लिए कोई भाव नहीं मिला।",
@@ -196,7 +196,7 @@ RESPONSES = {
         "scheme_template": "📋 *सरकारी योजना: पीएम-किसान सम्मान निधि*\nइस योजना के तहत भूमिधारक किसान परिवारों को ₹6,000 प्रति वर्ष की वित्तीय सहायता तीन समान किस्तों में मिलती है।\nअपना स्टेटस यहाँ जांचें: https://pmkisan.gov.in/"
     },
     "kn": {
-        "greeting": "ನಮಸ್ಕಾರ! ನಾನು ಕೃಷಿಮಿತ್ರ AI, ನಿಮ್ಮ ಕೃಷಿ ಸಹಾಯಕ.\nಇಂದು ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು? ನೀವು ಧಾನ್ಯದ ದರಗಳು (ಉದಾಹರಣೆಗೆ 'ಶಿವಮೊಗ್ಗದಲ್ಲಿ ಜೋಳದ ರೇಟ್'), ರಸಗೊಬ್ಬರ/ಬೀಜ ವಿತರಕರ ಹುಡುಕಾಟ ಅಥವಾ ಖರೀದಿದಾರರ ಬಗ್ಗೆ ಕೇಳಬಹುದು.",
+        "greeting": "🌾 *ಕೃಷಿಮಿತ್ರ AI ಗೆ ಸ್ವಾಗತ!* ನಿಮ್ಮ ಕೃಷಿ ಸಹಾಯಕ.\nಇಂದು ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು? ನೀವು ಧಾನ್ಯದ ದರಗಳು (ಉದಾಹರಣೆಗೆ 'ಶಿವಮೊಗ್ಗದಲ್ಲಿ ಜೋಳದ ರೇಟ್'), ಗೊಬ್ಬರ ಅಂಗಡಿಗಳು ಅಥವಾ ಖರೀದಿದಾರರ ಬಗ್ಗೆ ಕೇಳಬಹುದು.",
         "location_missing": "ದರಗಳನ್ನು ತಿಳಿಯಲು, ದಯವಿಟ್ಟು ನಿಮ್ಮ ಜಿಲ್ಲೆ ಅಥವಾ ಎಪಿಎಂಸಿ ಮಾರುಕಟ್ಟೆಯ ಹೆಸರನ್ನು ತಿಳಿಸಿ.",
         "commodity_missing": "ನೀವು ಯಾವ ಬೆಳೆಯ ದರವನ್ನು ತಿಳಿಯಲು ಬಯಸುತ್ತೀರಿ? (ಉದಾಹರಣೆಗೆ ಮೆಕ್ಕೆಜೋಳ, ಗೋಧಿ, ತೊಗರಿ ಬೇಳೆ, ಸೋಯಾಬೀನ್, ಈರುಳ್ಳಿ, ಟೊಮೆಟೊ, ಹತ್ತಿ, ಕಡಲೆ)",
         "not_found": "ಕ್ಷಮಿಸಿ, {mandi} ಮಾರುಕಟ್ಟೆಯಲ್ಲಿ {commodity} ಬೆಲೆ ವಿವರಗಳು ಲಭ್ಯವಿಲ್ಲ.",
@@ -207,7 +207,7 @@ RESPONSES = {
         "scheme_template": "📋 *ಸರ್ಕಾರಿ ಯೋಜನೆ: ಪಿಎಂ-ಕಿಸಾನ್ ಸಮ್ಮಾನ್ ನಿಧಿ*\nಈ ಯೋಜನೆಯಡಿ ಎಲ್ಲಾ ಭೂಹಿಡುವಳಿ ರೈತ ಕುಟುಂಬಗಳಿಗೆ ವರ್ಷಕ್ಕೆ ₹6,000 ಆರ್ಥಿಕ ಸಹಾಯವನ್ನು ಮೂರು ಸಮಾನ ಕಂತುಗಳಲ್ಲಿ ನೀಡಲಾಗುತ್ತದೆ.\nನಿಮ್ಮ ಅರ್ಹತೆಯನ್ನು ಇಲ್ಲಿ ಪರಿಶೀಲಿಸಿ: https://pmkisan.gov.in/"
     },
     "ta": {
-        "greeting": "வணக்கம்! நான் கிருஷிமித்ரா AI, உங்கள் விவசாய உதவியாளர்.\nஇன்று நான் உங்களுக்கு எவ்வாறு உதவட்டும்? சந்தை விலைகள் அல்லது உரக் கடைகளைப் பற்றி நீங்கள் கேட்கலாம்.",
+        "greeting": "🌾 *கிருஷிமித்ரா AI க்கு நல்வரவு!* உங்கள் விவசாய உதவியாளர்.\nஇன்று நான் உங்களுக்கு எவ்வாறு உதவட்டும்? சந்தை விலைகள் அல்லது உரக் கடைகளைப் பற்றி நீங்கள் கேட்கலாம்.",
         "location_missing": "விலையை அறிய, தயவுசெய்து உங்கள் மாவட்டம் அல்லது சந்தை பெயரைக் குறிப்பிடவும்.",
         "commodity_missing": "எந்தப் பயிரின் விலையை அறிய விரும்புகிறீர்கள்? (எ.கா. கோதுமை, மக்காச்சோளம், வெங்காயம், தக்காளி)",
         "not_found": "மன்னிக்கவும், {mandi} சந்தையில் {commodity} க்கான விலை விவரங்கள் கிடைக்கவில்லை.",
@@ -233,9 +233,23 @@ def generate_chatbot_response(query_text: str, db: sqlite3.Connection) -> str:
     texts = RESPONSES[lang]
     intent = parsed.get("intent")
     
-    # Quick greeting catch
-    if query_text.lower().strip() in ["hello", "hi", "hey", "नमस्ते", "ನಮಸ್ಕಾರ", "வணக்கம்"]:
+    # Check activation trigger keywords
+    q_clean = query_text.lower().strip()
+    is_activation_phrase = any(kw in q_clean for kw in ["krishimitra", "krishi mitra", "कृषिमित्र", "ಕೃಷಿಮಿತ್ರ", "கிருஷிமித்ரா"])
+    is_simple_greeting = q_clean in ["hello", "hi", "hey", "hi!", "hello!", "hey!", "namaste", "नमस्ते", "ನಮಸ್ಕಾರ", "வணக்கம்"]
+    
+    if is_activation_phrase:
         return texts["greeting"]
+        
+    if is_simple_greeting:
+        if lang == "hi":
+            return "🌾 कृषिमित्र एआई बोट शुरू करने के लिए कृपया *Hi KrishiMitra* या *नमस्ते कृषिमित्र* कहें या अपनी फसल का प्रश्न पूछें (जैसे 'इंदौर में गेहूं का भाव')!"
+        elif lang == "kn":
+            return "🌾 ಕೃಷಿಮಿತ್ರ AI ಬೋಟ್ ಸಕ್ರಿಯಗೊಳಿಸಲು ದಯವಿಟ್ಟು *Hi KrishiMitra* ಅಥವಾ *ನಮಸ್ಕಾರ ಕೃಷಿಮಿತ್ರ* ಎಂದು ಕಳುಹಿಸಿ (ಉದಾ: 'ಶಿವಮೊಗ್ಗದಲ್ಲಿ ಜೋಳದ ರೇಟ್')!"
+        elif lang == "ta":
+            return "🌾 கிருஷிமித்ரா AI பாட்டை செயல்படுத்த தயவுசெய்து *Hi KrishiMitra* அல்லது *வணக்கம் கிருஷிமித்ரா* என அனுப்பவும் (எ.கா: 'இந்தூரில் கோதுமை விலை')!"
+        else:
+            return "🌾 To activate KrishiMitra AI Bot, please send *Hi KrishiMitra* or ask your crop question (e.g., 'Wheat rate in Indore')."
 
     # Process Intent
     if intent == "list_commodities":

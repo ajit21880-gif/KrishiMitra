@@ -56,5 +56,27 @@ class KrishiMitraTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("xml", response.headers["Content-Type"].lower())
 
+    def test_activation_triggers_multilingual(self):
+        # 1. Test "Hi KrishiMitra" activation in English
+        r_en = self.app.post("/api/query", json={"text": "Hi KrishiMitra"})
+        self.assertIn("Welcome to KrishiMitra AI", r_en.json["text"])
+
+        # 2. Test "नमस्ते कृषिमित्र" in Hindi
+        r_hi = self.app.post("/api/query", json={"text": "नमस्ते कृषिमित्र"})
+        self.assertIn("कृषिमित्र एआई में आपका स्वागत है", r_hi.json["text"])
+
+        # 3. Test "ನಮಸ್ಕಾರ ಕೃಷಿಮಿತ್ರ" in Kannada
+        r_kn = self.app.post("/api/query", json={"text": "ನಮಸ್ಕಾರ ಕೃಷಿಮಿತ್ರ"})
+        self.assertIn("ಕೃಷಿಮಿತ್ರ AI ಗೆ ಸ್ವಾಗತ", r_kn.json["text"])
+
+        # 4. Test "வணக்கம் கிருஷிமித்ரா" in Tamil
+        r_ta = self.app.post("/api/query", json={"text": "வணக்கம் கிருஷிமித்ரா"})
+        self.assertIn("கிருஷிமித்ரா AI க்கு நல்வரவு", r_ta.json["text"])
+
+    def test_simple_greeting_prompt(self):
+        # Generic Hi without KrishiMitra should ask user to say Hi KrishiMitra
+        r = self.app.post("/api/query", json={"text": "Hi"})
+        self.assertIn("please send *Hi KrishiMitra*", r.json["text"])
+
 if __name__ == '__main__':
     unittest.main()

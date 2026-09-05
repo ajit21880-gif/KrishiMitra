@@ -62,9 +62,23 @@ def generate_chatbot_response(query_text: str, db: sqlite3.Connection) -> str:
     texts = RESPONSES[lang]
     intent = parsed.get("intent")
     
-    # Quick greeting catch
-    if query_text.lower().strip() in ["hello", "hi", "hey", "नमस्ते", "ನಮಸ್ಕಾರ"]:
+    # Check activation trigger keywords
+    q_clean = query_text.lower().strip()
+    is_activation_phrase = any(kw in q_clean for kw in ["krishimitra", "krishi mitra", "कृषिमित्र", "ಕೃಷಿಮಿತ್ರ", "கிருஷிமித்ரா"])
+    is_simple_greeting = q_clean in ["hello", "hi", "hey", "hi!", "hello!", "hey!", "namaste", "नमस्ते", "ನಮಸ್ಕಾರ", "வணக்கம்"]
+    
+    if is_activation_phrase:
         return texts["greeting"]
+        
+    if is_simple_greeting:
+        if lang == "hi":
+            return "🌾 कृषिमित्र एआई बोट शुरू करने के लिए कृपया *Hi KrishiMitra* या *नमस्ते कृषिमित्र* कहें या अपनी फसल का प्रश्न पूछें (जैसे 'इंदौर में गेहूं का भाव')!"
+        elif lang == "kn":
+            return "🌾 ಕೃಷಿಮಿತ್ರ AI ಬೋಟ್ ಸಕ್ರಿಯಗೊಳಿಸಲು ದಯವಿಟ್ಟು *Hi KrishiMitra* ಅಥವಾ *ನಮಸ್ಕಾರ ಕೃಷಿಮಿತ್ರ* ಎಂದು ಕಳುಹಿಸಿ (ಉದಾ: 'ಶಿವಮೊಗ್ಗದಲ್ಲಿ ಜೋಳದ ರೇಟ್')!"
+        elif lang == "ta":
+            return "🌾 கிருஷிமித்ரா AI பாட்டை செயல்படுத்த தயவுசெய்து *Hi KrishiMitra* அல்லது *வணக்கம் கிருஷிமித்ரா* என அனுப்பவும் (எ.கா: 'இந்தூரில் கோதுமை விலை')!"
+        else:
+            return "🌾 To activate KrishiMitra AI Bot, please send *Hi KrishiMitra* or ask your crop question (e.g., 'Wheat rate in Indore')."
 
     # Process Intent
     if intent == "price":

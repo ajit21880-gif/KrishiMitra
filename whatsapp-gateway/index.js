@@ -118,7 +118,8 @@ client.on('message_create', async (msg) => {
 
     if (!userQuery) return;
 
-    console.log(`[INCOMING] Message from ${userPhone}: "${userQuery}"`);
+    const isActivation = /krishi\s*mitra|कृषिमित्र|ಕೃಷಿಮಿತ್ರ|கிருஷிமித்ரா/i.test(userQuery);
+    console.log(`[INCOMING] Message from ${userPhone}: "${userQuery}" ${isActivation ? '🔔 (Activation Trigger Received)' : ''}`);
 
     // Call KrishiMitra backend API
     const response = await axios.post(`${BACKEND_URL}/api/query`, {
@@ -127,7 +128,7 @@ client.on('message_create', async (msg) => {
 
     const replyText = response.data?.text || "Sorry, I could not process your query at the moment. Please try again.";
 
-    console.log(`[OUTGOING] Reply to ${userPhone}: "${replyText.substring(0, 80)}..."`);
+    console.log(`[OUTGOING] Reply to ${userPhone}: "${replyText.substring(0, 80).replace(/\n/g, ' ')}..."`);
     await msg.reply(replyText);
 
   } catch (err) {

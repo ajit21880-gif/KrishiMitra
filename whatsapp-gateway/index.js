@@ -114,27 +114,59 @@ client.on('message_create', async (msg) => {
 
     const fromRaw = msg.from.split('@')[0];
     const userPhone = `+${fromRaw}`;
-    const userQuery = msg.body?.trim();
 
+    // 1. Handle Voice Note / Audio Messages
+    if (msg.hasMedia && (msg.type === 'ptt' || msg.type === 'audio')) {
+      console.log(`[INCOMING VOICE NOTE] Voice note received from ${userPhone}... downloading audio`);
+      const media = await msg.downloadMedia();
+      if (media && media.data) {
+        console.log(`[VOICE NOTE DOWNLOADED] Size: ${media.data.length} chars, Mime: ${media.mimetype}`);
+        
+        let response;
+        try {
+          response = await axios.post(`http://127.0.0.1:8000/api/query/voice`, {
+            audio: media.data,
+            mime_type: media.mimetype || 'audio/ogg'
+          }, { timeout: 15000 });
+        } catch (e1) {
+          response = await axios.post(`http://localhost:8000/api/query/voice`, {
+            audio: media.data,
+            mime_type: media.mimetype || 'audio/ogg'
+          }, { timeout: 15000 });
+        }
+
+        const replyText = response.data?.text || "Sorry, I could not transcribe your voice message.";
+        const transcribed = response.data?.transcribed_text || "Voice Note";
+        
+        console.log(`[TRANSCRIPTION] "${transcribed}" -> Reply: "${replyText.substring(0, 80).replace(/\n/g, ' ')}..."`);
+        await msg.reply(`🎤 *Voice Note Transcribed* ("${transcribed}"):\n\n${replyText}`);
+        return;
+      }
+    }
+
+    // 2. Handle Text Messages
+    const userQuery = msg.body?.trim();
     if (!userQuery) return;
 
     const isActivation = /krishi\s*mitra|कृषिमित्र|ಕೃಷಿಮಿತ್ರ|கிருஷிமித்ரா/i.test(userQuery);
-    console.log(`[INCOMING] Message from ${userPhone}: "${userQuery}" ${isActivation ? '🔔 (Activation Trigger Received)' : ''}`);
+    console.log(`[INCOMING TEXT] Message from ${userPhone}: "${userQuery}" ${isActivation ? '🔔 (Activation Trigger Received)' : ''}`);
 
-    // Call KrishiMitra backend API
-    const response = await axios.post(`${BACKEND_URL}/api/query`, {
-      text: userQuery
-    });
+    let response;
+    try {
+      response = await axios.post(`http://127.0.0.1:8000/api/query`, { text: userQuery }, { timeout: 10000 });
+    } catch (e1) {
+      response = await axios.post(`http://localhost:8000/api/query`, { text: userQuery }, { timeout: 10000 });
+    }
 
     const replyText = response.data?.text || "Sorry, I could not process your query at the moment. Please try again.";
 
-    console.log(`[OUTGOING] Reply to ${userPhone}: "${replyText.substring(0, 80).replace(/\n/g, ' ')}..."`);
+    console.log(`[OUTGOING REPLY] Reply to ${userPhone}: "${replyText.substring(0, 80).replace(/\n/g, ' ')}..."`);
     await msg.reply(replyText);
 
   } catch (err) {
     console.error(`[ERROR] Failed processing WhatsApp message:`, err.message || err);
     try {
-      await msg.reply("🌾 *KrishiMitra AI*:\nSorry, an error occurred while fetching Mandi rates. Please try again shortly.");
+      await msg.reply("🌾 *KrishiMitra AI*:\nBackend server connection error. Please make sure the Python server (`python app/main.py`) is running on port 8000.");
     } catch (e) {}
   }
 });

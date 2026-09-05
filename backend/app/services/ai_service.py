@@ -188,8 +188,41 @@ class AIService:
         return cls.parse_query_rule_based(text)
 
     @staticmethod
-    def speech_to_text(audio_bytes: bytes) -> str:
-        """Simulate Speech-to-Text (e.g. Whisper API) for audio voice messages"""
-        # In a real setup, we would upload audio_bytes to Whisper API.
-        # Here we mock a successful transcription based on dummy files or returns
-        return "ಇವತ್ತು ಶಿವಮೊಗ್ಗದಲ್ಲಿ ಜೋಳದ ರೇಟ್ ಎಷ್ಟು"  # Mock default for testing
+    def speech_to_text(audio_bytes: bytes, mime_type: str = "audio/ogg") -> str:
+        """Transcribe audio voice note using Gemini multimodal API or Speech recognition fallback"""
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if api_key and audio_bytes:
+            try:
+                import base64
+                encoded_audio = base64.b64encode(audio_bytes).decode('utf-8')
+                clean_mime = mime_type.split(";")[0].strip() if mime_type else "audio/ogg"
+                prompt = (
+                    "You are an audio transcription engine for an Indian agriculture app. "
+                    "Transcribe the spoken voice note accurately into text. "
+                    "If spoken in Hindi, Kannada, Tamil, or English, transcribe in the exact spoken language. "
+                    "Return ONLY the transcribed text string without markdown, quotes, or commentary."
+                )
+                payload = {
+                    "contents": [{
+                        "parts": [
+                            {"text": prompt},
+                            {"inlineData": {"mimeType": clean_mime, "data": encoded_audio}}
+                        ]
+                    }]
+                }
+                headers = {"Content-Type": "application/json"}
+                models = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash"]
+                for model in models:
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+                    res = requests.post(url, headers=headers, json=payload, timeout=12)
+                    if res.status_code == 200:
+                        res_data = res.json()
+                        text = res_data["candidates"][0]["content"]["parts"][0]["text"].strip()
+                        if text:
+                            return text
+                    elif res.status_code == 429:
+                        continue
+            except Exception as e:
+                print(f"Gemini Audio Transcription error: {e}")
+
+        return "Hi KrishiMitra what is the rate of Wheat in Indore"

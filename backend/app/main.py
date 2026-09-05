@@ -879,21 +879,33 @@ def process_query():
 
 @app.route("/api/query/voice", methods=["POST"])
 def process_voice_query():
-    if "file" not in request.files:
-        return jsonify({"detail": "No file uploaded"}), 400
-        
-    file = request.files["file"]
-    audio_bytes = file.read()
-    
-    transcribed_text = AIService.speech_to_text(audio_bytes)
-    print(f"Transcribed voice: {transcribed_text}")
-    
+    audio_bytes = None
+    mime_type = "audio/ogg"
+
+    if request.is_json:
+        data = request.get_json() or {}
+        base64_data = data.get("audio")
+        mime_type = data.get("mime_type", "audio/ogg")
+        if base64_data:
+            import base64
+            audio_bytes = base64.b64decode(base64_data)
+    elif "file" in request.files:
+        file = request.files["file"]
+        audio_bytes = file.read()
+        mime_type = file.mimetype or "audio/ogg"
+
+    if not audio_bytes:
+        return jsonify({"detail": "No audio file or base64 data received"}), 400
+
+    transcribed_text = AIService.speech_to_text(audio_bytes, mime_type=mime_type)
+    print(f"Transcribed voice note: '{transcribed_text}'")
+
     conn = get_db_connection()
     try:
         response_text = generate_chatbot_response(transcribed_text, conn)
         parsed = AIService.parse_query(transcribed_text)
         speech_url = f"/api/voice/tts?text={urllib.parse.quote(response_text[:30])}"
-        
+
         return jsonify({
             "transcribed_text": transcribed_text,
             "text": response_text,

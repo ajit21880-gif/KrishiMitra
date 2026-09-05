@@ -423,10 +423,22 @@ def verify_otp():
 def admin_upload_rates():
     """
     Admin endpoint to upload local mandi rates in bulk (JSON, CSV text, or file upload).
-    Expected fields per record: state, district, mandi_name, commodity, modal_price, [min_price], [max_price], [date]
+    Requires valid Admin Secret Security PIN.
     """
     import csv
     import io
+
+    # Admin Secret PIN Verification Check
+    admin_pin = request.headers.get("X-Admin-PIN") or request.form.get("admin_pin")
+    if request.is_json and isinstance(request.get_json(), dict):
+        admin_pin = admin_pin or request.get_json().get("admin_pin")
+        
+    EXPECTED_PIN = os.environ.get("ADMIN_PIN", "2026")
+    if not admin_pin or str(admin_pin).strip() != str(EXPECTED_PIN).strip():
+        return jsonify({
+            "success": False,
+            "detail": "🔒 Unauthorized: Invalid Admin Security PIN. Access denied."
+        }), 401
     
     records = []
     

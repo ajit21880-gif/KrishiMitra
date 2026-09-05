@@ -100,26 +100,21 @@ class MandiService:
         commodity_name: str
     ) -> Dict[str, Any]:
         """
-        Retrieves mandi price from live government API or falls back to sqlite3 database.
+        Retrieves mandi price instantly from local SQLite database (sub-5ms),
+        or attempts live API call if no local record is found.
         """
-        api_key = os.environ.get("DATAGOV_API_KEY")
-        if api_key:
-            live_data = cls.get_live_mandi_prices_from_gov(api_key, state, district, mandi_name, commodity_name)
-            if live_data:
-                return live_data
-                
         cursor = conn.cursor()
         
-        # Fallback to local DB seeded daily_prices
+        # 1. Instant SQLite DB Lookup (Sub-5ms)
         cursor.execute(
-            "SELECT id, mandi_name, state, district FROM mandis WHERE state LIKE ? AND mandi_name LIKE ?",
-            (f"%{state}%", f"%{mandi_name}%")
+            "SELECT id, mandi_name, state, district FROM mandis WHERE state LIKE ? AND (mandi_name LIKE ? OR mandi_name LIKE ?)",
+            (f"%{state}%", f"%{mandi_name}%", f"%{mandi_name.replace('APMC','').strip()}%")
         )
         mandi = cursor.fetchone()
         
         cursor.execute(
             "SELECT id, commodity_name FROM commodities WHERE commodity_name LIKE ?",
-            (commodity_name,)
+            (f"%{commodity_name}%",)
         )
         commodity = cursor.fetchone()
         
@@ -154,6 +149,13 @@ class MandiService:
                     "source": source_label,
                     "last_updated": display_date
                 }
+
+        # 2. Live API Fallback if DB record missing
+        api_key = os.environ.get("DATAGOV_API_KEY")
+        if api_key:
+            live_data = cls.get_live_mandi_prices_from_gov(api_key, state, district, mandi_name, commodity_name)
+            if live_data:
+                return live_data
                 
         return {
             "commodity": commodity_name,

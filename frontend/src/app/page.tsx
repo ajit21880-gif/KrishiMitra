@@ -174,11 +174,16 @@ export default function Home() {
   // Admin upload states
   const [showAdminUploadModal, setShowAdminUploadModal] = useState(false);
   const [csvInput, setCsvInput] = useState("");
+  const [adminPin, setAdminPin] = useState("");
   const [uploadStatus, setUploadStatus] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
 
   const handleAdminUpload = (csvText?: string) => {
     const payloadCsv = csvText || csvInput;
+    if (!adminPin.trim()) {
+      alert("Please enter the Admin Security PIN.");
+      return;
+    }
     if (!payloadCsv.trim()) {
       alert("Please paste CSV data or select a CSV file.");
       return;
@@ -188,9 +193,13 @@ export default function Home() {
 
     const formData = new FormData();
     formData.append("csv_text", payloadCsv);
+    formData.append("admin_pin", adminPin.trim());
 
     fetch(`${BACKEND_URL}/api/admin/upload-rates`, {
       method: "POST",
+      headers: {
+        "X-Admin-PIN": adminPin.trim()
+      },
       body: formData
     })
       .then(res => res.json())
@@ -1306,6 +1315,18 @@ export default function Home() {
                   Karnataka,Shivamogga,Shimoga APMC,Maize,2026-09-05,2200,2350,2500<br/>
                   Maharashtra,Pune,Pune APMC (Gultekdi),Wheat,2026-09-05,2400,2550,2700
                 </code>
+              </div>
+
+              {/* Admin Security PIN Field */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">🔑 Admin Security PIN / Password</label>
+                <input 
+                  type="password"
+                  value={adminPin}
+                  onChange={(e) => setAdminPin(e.target.value)}
+                  placeholder="Enter Admin Security PIN (Default: 2026)"
+                  className="w-full border border-gray-300 rounded-lg p-2 text-xs font-bold text-gray-900 focus:outline-none focus:border-primary-500"
+                />
               </div>
 
               {/* File Upload input */}

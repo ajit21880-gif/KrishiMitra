@@ -59,19 +59,19 @@ class KrishiMitraTestCase(unittest.TestCase):
     def test_activation_triggers_multilingual(self):
         # 1. Test "Hi KrishiMitra" activation in English
         r_en = self.app.post("/api/query", json={"text": "Hi KrishiMitra"})
-        self.assertIn("Welcome to KrishiMitra AI", r_en.json["text"])
+        self.assertIn("Welcome to KrishiMitra AI", r_en.get_json()["text"])
 
         # 2. Test "नमस्ते कृषिमित्र" in Hindi
         r_hi = self.app.post("/api/query", json={"text": "नमस्ते कृषिमित्र"})
-        self.assertIn("कृषिमित्र एआई में आपका स्वागत है", r_hi.json["text"])
+        self.assertIn("कृषिमित्र एआई में आपका स्वागत है", r_hi.get_json()["text"])
 
         # 3. Test "ನಮಸ್ಕಾರ ಕೃಷಿಮಿತ್ರ" in Kannada
         r_kn = self.app.post("/api/query", json={"text": "ನಮಸ್ಕಾರ ಕೃಷಿಮಿತ್ರ"})
-        self.assertIn("ಕೃಷಿಮಿತ್ರ AI ಗೆ ಸ್ವಾಗತ", r_kn.json["text"])
+        self.assertIn("ಕೃಷಿಮಿತ್ರ AI ಗೆ ಸ್ವಾಗತ", r_kn.get_json()["text"])
 
         # 4. Test "வணக்கம் கிருஷிமித்ரா" in Tamil
         r_ta = self.app.post("/api/query", json={"text": "வணக்கம் கிருஷிமித்ரா"})
-        self.assertIn("கிருஷிமித்ரா AI க்கு நல்வரவு", r_ta.json["text"])
+        self.assertIn("கிருஷிமித்ரா AI க்கு நல்வரவு", r_ta.get_json()["text"])
 
     def test_sugar_delhi_query(self):
         r = self.app.post("/api/query", json={"text": "What's the price of sugar in delhi?"})

@@ -138,8 +138,8 @@ async function fetchVoiceNoteMedia(client, msg) {
             await new Promise(r => setTimeout(r, 500));
           }
 
-          const downloadManager = window.require('WAWebDownloadManager').downloadManager;
-          const mockQpl = { addAnnotations: function() { return this; }, addPoint: function() { return this; } };
+          // CRITICAL FIX: Pass 'audio' instead of 'ptt' for voice notes to browser decrypter
+          const targetType = (m.type === 'ptt' || m.type === 'audio') ? 'audio' : m.type;
 
           const decryptedMedia = await downloadManager.downloadAndMaybeDecrypt({
             directPath: m.directPath,
@@ -147,7 +147,7 @@ async function fetchVoiceNoteMedia(client, msg) {
             filehash: m.filehash,
             mediaKey: m.mediaKey,
             mediaKeyTimestamp: m.mediaKeyTimestamp,
-            type: m.type,
+            type: targetType,
             signal: new AbortController().signal,
             downloadQpl: mockQpl,
           });

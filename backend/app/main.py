@@ -1,6 +1,7 @@
 import os
 import sys
 import uuid
+import re
 import jwt
 import threading
 import time
@@ -237,9 +238,17 @@ def generate_chatbot_response(query_text: str, db: sqlite3.Connection) -> str:
     q_clean = query_text.lower().strip()
     is_activation_phrase = any(kw in q_clean for kw in ["krishimitra", "krishi mitra", "कृषिमित्र", "ಕೃಷಿಮಿತ್ರ", "கிருஷிமித்ரா"])
     is_simple_greeting = q_clean in ["hello", "hi", "hey", "hi!", "hello!", "hey!", "namaste", "नमस्ते", "ನಮಸ್ಕಾರ", "வணக்கம்"]
-    
+
     if is_activation_phrase:
-        return texts["greeting"]
+        # Check if query contains content beyond activation phrase / greeting
+        stripped = q_clean
+        for kw in ["krishimitra", "krishi mitra", "कृषिमित्र", "ಕೃಷಿಮಿತ್ರ", "கிருஷிமித்ரா", "hi", "hello", "hey", "namaste", "नमस्ते", "ನಮಸ್ಕಾರ", "வணக்கம்"]:
+            stripped = stripped.replace(kw, "").strip()
+        stripped = re.sub(r'^[,\s\.!\?]+|[,\s\.!\?]+$', '', stripped).strip()
+        
+        if not stripped or len(stripped) <= 2:
+            return texts["greeting"]
+        # If user asked a question along with activation phrase, continue to process intent
         
     if is_simple_greeting:
         return "" # Completely silent for plain Hi/Hello - only react when Hi KrishiMitra is said

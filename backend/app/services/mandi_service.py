@@ -150,26 +150,7 @@ class MandiService:
                     "last_updated": display_date
                 }
 
-        # 2. Search across any mandi for this commodity in local DB
-        cursor.execute(
-            "SELECT dp.*, m.mandi_name, c.commodity_name FROM daily_prices dp JOIN mandis m ON dp.mandi_id = m.id JOIN commodities c ON dp.commodity_id = c.id WHERE c.commodity_name LIKE ? ORDER BY dp.date DESC LIMIT 1",
-            (f"%{commodity_name}%",)
-        )
-        any_price = cursor.fetchone()
-        if any_price:
-            today_str = datetime.now().date().isoformat()
-            return {
-                "commodity": any_price["commodity_name"],
-                "mandi": f"{mandi_name}",
-                "date": today_str,
-                "min_price": any_price["min_price"],
-                "modal_price": any_price["modal_price"],
-                "max_price": any_price["max_price"],
-                "source": "AGMARKNET (Cached Rates)",
-                "last_updated": today_str
-            }
-
-        # 3. Live Government AGMARKNET API Fallback if DB record missing
+        # 2. Live Government AGMARKNET API Fallback if DB record missing
         api_key = os.environ.get("DATAGOV_API_KEY")
         if api_key:
             live_data = cls.get_live_mandi_prices_from_gov(api_key, state, district, mandi_name, commodity_name)

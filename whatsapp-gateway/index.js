@@ -1,9 +1,86 @@
-const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia, Message } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
 const axios = require('axios');
+
+// Global PTT Download Patch: Fixes WhatsApp Web 'ptt' -> 'audio' decryption mismatch
+const originalDownloadMedia = Message.prototype.downloadMedia;
+Message.prototype.downloadMedia = async function() {
+  if (this.type === 'ptt' || this.type === 'audio') {
+    try {
+      const res = await this.client.pupPage.evaluate(async (msgId) => {
+        let m = window.WWebJS ? window.WWebJS.getMsg(msgId) : null;
+        if (!m && window.Store && window.Store.Msg) {
+          m = window.Store.Msg.get(msgId);
+        }
+        if (!m) return null;
+
+        if (m.mediaData && m.mediaData.mediaStage !== 'RESOLVED' && !m.mediaData.mediaBlob) {
+          try {
+            const origType = m.type;
+            if (m.type === 'ptt') m.type = 'audio';
+            await m.downloadMedia({ downloadEvenIfExpensive: true, rmrReason: 1 });
+            m.type = origType;
+          } catch (e) {}
+        }
+
+        for (let i = 0; i < 10; i++) {
+          if (m.mediaData && (m.mediaData.mediaStage === 'RESOLVED' || m.mediaData.mediaStage === 'FETCHED' || m.mediaData.mediaBlob)) {
+            break;
+          }
+          await new Promise(r => setTimeout(r, 500));
+        }
+
+        let arrayBuf = null;
+        if (m.mediaData && m.mediaData.mediaBlob) {
+          try {
+            arrayBuf = await m.mediaData.mediaBlob.arrayBuffer();
+          } catch (e) {}
+        }
+
+        if (!arrayBuf) {
+          const dlMgr = window.Store ? window.Store.DownloadManager : null;
+          if (dlMgr && dlMgr.downloadAndMaybeDecrypt) {
+            try {
+              const mockQpl = { addAnnotations: function () { return this; }, addPoint: function () { return this; } };
+              arrayBuf = await dlMgr.downloadAndMaybeDecrypt({
+                directPath: m.directPath,
+                encFilehash: m.encFilehash,
+                filehash: m.filehash,
+                mediaKey: m.mediaKey,
+                mediaKeyTimestamp: m.mediaKeyTimestamp,
+                type: 'audio',
+                signal: new AbortController().signal,
+                downloadQpl: mockQpl,
+              });
+            } catch (e) {}
+          }
+        }
+
+        if (!arrayBuf) return null;
+
+        const dataB64 = window.WWebJS ? await window.WWebJS.arrayBufferToBase64Async(arrayBuf) : null;
+        if (!dataB64) return null;
+
+        return {
+          data: dataB64,
+          mimetype: m.mimetype || 'audio/ogg',
+          filename: m.filename || 'audio.ogg',
+          filesize: m.size || 0
+        };
+      }, this.id._serialized);
+
+      if (res && res.data) {
+        return new MessageMedia(res.mimetype, res.data, res.filename, res.filesize);
+      }
+    } catch (err) {
+      console.log(`[PTT DOWNLOAD OVERRIDE WARN] ${err.message || err}`);
+    }
+  }
+  return await originalDownloadMedia.call(this);
+};
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
 

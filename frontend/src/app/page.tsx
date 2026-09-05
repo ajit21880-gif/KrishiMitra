@@ -277,13 +277,31 @@ export default function Home() {
     waEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [waLog]);
 
-  // Trigger TTS voice synthesis with markdown stripping and natural voice selection
+  // Trigger TTS voice synthesis with markdown stripping, natural date formatting, and voice selection
   const speakText = (text: string) => {
     if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
       
-      // Clean markdown formatting (*, #, •, bullet points, links) for natural voice reading
+      const monthsEn = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const monthsHi = ["जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"];
+      const monthsKn = ["ಜನವರಿ", "ಫೆಬ್ರವರಿ", "ಮಾರ್ಚ್", "ಏಪ್ರಿಲ್", "ಮೇ", "ಜೂನ್", "ಜುಲೈ", "ಆಗಸ್ಟ್", "ಸೆಪ್ಟೆಂಬರ್", "ಅಕ್ಟೋಬರ್", "ನವೆಂಬರ್", "ಡಿಸೆಂಬರ್"];
+      const monthsTa = ["ஜனவரி", "பிப்ரவரி", "மார்ச்", "ஏப்ரல்", "மே", "ஜூன்", "ஜூலை", "ஆகஸ்ட்", "செப்டம்பர்", "அக்டோபர்", "நவம்பர்", "டிசம்பர்"];
+
+      let monthList = monthsEn;
+      if (lang === "hi") monthList = monthsHi;
+      else if (lang === "kn") monthList = monthsKn;
+      else if (lang === "ta") monthList = monthsTa;
+
+      // Clean markdown formatting (*, #, •, bullet points, links) and naturalize dates (YYYY-MM-DD -> 5 September 2026)
       const cleanText = text
+        .replace(/(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/g, (_, y, m, d) => {
+          const monthName = monthList[parseInt(m, 10) - 1] || m;
+          return `${parseInt(d, 10)} ${monthName} ${y}`;
+        })
+        .replace(/(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/g, (_, d, m, y) => {
+          const monthName = monthList[parseInt(m, 10) - 1] || m;
+          return `${parseInt(d, 10)} ${monthName} ${y}`;
+        })
         .replace(/[*#_`~•]/g, "")
         .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
         .replace(/http[s]?:\/\/\S+/g, "")
@@ -656,12 +674,14 @@ export default function Home() {
       
       setTimeout(() => {
         setWaLog(prev => [...prev, { sender: "bot", text: data.text, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+        speakText(data.text);
       }, 700);
       
     } catch (err) {
       setTimeout(() => {
         const mockReply = `[Simulated WhatsApp reply] Target: +919876543210.\nToday's Wheat modal price in Indore is ₹2,540/quintal. Source: AGMARKNET.`;
         setWaLog(prev => [...prev, { sender: "bot", text: mockReply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+        speakText(mockReply);
       }, 700);
     }
   };
@@ -720,6 +740,7 @@ export default function Home() {
             
             setTimeout(() => {
               setWaLog(prev => [...prev, { sender: "bot", text: data.text, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+              speakText(data.text);
             }, 700);
           } catch (e) {
             console.error(e);
@@ -1122,9 +1143,35 @@ export default function Home() {
         {activeTab === "whatsapp" && (
           <div className="flex flex-col flex-1 h-full min-h-0 bg-[#efeae2] rounded-2xl border border-gray-200 shadow-inner overflow-hidden relative">
             
+            {/* Direct WhatsApp Connect Card & QR Code */}
+            <div className="bg-white p-3 border-b border-gray-200 flex flex-row items-center gap-3 shadow-sm">
+              <img 
+                src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://wa.me/919876543210?text=Hi%20KrishiMitra" 
+                alt="WhatsApp QR Code" 
+                className="w-16 h-16 border rounded-lg p-1 bg-white shadow-sm shrink-0"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="inline-block bg-green-100 text-green-800 text-[9px] font-bold px-2 py-0.5 rounded-full mb-0.5">
+                  📱 WhatsApp Bot (+91 98765 43210)
+                </div>
+                <h4 className="font-bold text-xs text-gray-800 truncate">Scan QR to Chat on Mobile</h4>
+                <p className="text-[10px] text-gray-500 line-clamp-1">
+                  Scan code with phone camera or tap button to launch WhatsApp directly.
+                </p>
+                <a 
+                  href="https://wa.me/919876543210?text=Hi%20KrishiMitra" 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="inline-flex items-center gap-1 mt-1 bg-[#25D366] hover:bg-[#1ebd59] text-white font-bold text-[10px] px-2.5 py-1 rounded shadow-sm transition-all"
+                >
+                  <span>Open WhatsApp</span> ↗
+                </a>
+              </div>
+            </div>
+
             {/* WhatsApp Simulator Header */}
-            <div className="bg-[#075e54] text-white p-3 flex items-center gap-2">
-              <div className="w-9 h-9 bg-green-200 rounded-full flex items-center justify-center font-bold text-green-800 text-sm">
+            <div className="bg-[#075e54] text-white p-2.5 flex items-center gap-2">
+              <div className="w-8 h-8 bg-green-200 rounded-full flex items-center justify-center font-bold text-green-800 text-xs">
                 KM
               </div>
               <div>
@@ -1138,7 +1185,7 @@ export default function Home() {
               {waLog.map((chat, idx) => (
                 <div 
                   key={idx}
-                  className={`flex flex-col max-w-[80%] ${
+                  className={`flex flex-col max-w-[85%] ${
                     chat.sender === "user" ? "self-end items-end" : "self-start items-start"
                   }`}
                 >
@@ -1147,7 +1194,18 @@ export default function Home() {
                       ? "bg-[#d9fdd3] text-gray-800 rounded-tr-none" 
                       : "bg-white text-gray-800 rounded-tl-none"
                   }`}>
-                    <p className="whitespace-pre-line">{chat.text}</p>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="whitespace-pre-line flex-1">{chat.text}</p>
+                      {chat.sender === "bot" && (
+                        <button
+                          onClick={() => speakText(chat.text)}
+                          title="Listen to audio"
+                          className="p-1 text-primary-600 hover:text-primary-800 hover:bg-green-50 rounded-full transition-colors shrink-0"
+                        >
+                          <Volume2 size={13} />
+                        </button>
+                      )}
+                    </div>
                     <span className="text-[8px] text-gray-400 block text-right mt-1">{chat.time}</span>
                   </div>
                 </div>

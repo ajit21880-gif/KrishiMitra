@@ -211,7 +211,7 @@ class AIService:
                     }]
                 }
                 headers = {"Content-Type": "application/json"}
-                models = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash"]
+                models = ["gemini-1.5-flash", "gemini-2.0-flash-exp", "gemini-1.5-pro"]
                 for model in models:
                     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
                     res = requests.post(url, headers=headers, json=payload, timeout=12)

@@ -118,33 +118,49 @@ client.on('message_create', async (msg) => {
     // 1. Handle Voice Note / Audio Messages
     if (msg.hasMedia && (msg.type === 'ptt' || msg.type === 'audio')) {
       console.log(`[INCOMING VOICE NOTE] Voice note received from ${userPhone}... downloading audio`);
-      const media = await msg.downloadMedia();
-      if (media && media.data) {
-        console.log(`[VOICE NOTE DOWNLOADED] Size: ${media.data.length} chars, Mime: ${media.mimetype}`);
-        
-        let response;
-        try {
-          response = await axios.post(`http://127.0.0.1:8000/api/query/voice`, {
-            audio: media.data,
-            mime_type: media.mimetype || 'audio/ogg'
-          }, { timeout: 15000 });
-        } catch (e1) {
-          response = await axios.post(`http://localhost:8000/api/query/voice`, {
-            audio: media.data,
-            mime_type: media.mimetype || 'audio/ogg'
-          }, { timeout: 15000 });
-        }
+      try {
+        const media = await msg.downloadMedia();
+        if (media && media.data) {
+          console.log(`[VOICE NOTE DOWNLOADED] Size: ${media.data.length} chars, Mime: ${media.mimetype}`);
+          
+          const axiosConfig = {
+            timeout: 20000,
+            maxBodyLength: Infinity,
+            maxContentLength: Infinity
+          };
 
-        const replyText = response.data?.text?.trim() || "";
-        const transcribed = response.data?.transcribed_text || "Voice Note";
-        
-        if (!replyText) {
-          console.log(`[SILENT VOICE NOTE] "${transcribed}" from ${userPhone} (No activation phrase or query -> Remaining silent)`);
+          let response;
+          try {
+            response = await axios.post(`http://127.0.0.1:8000/api/query/voice`, {
+              audio: media.data,
+              mime_type: media.mimetype || 'audio/ogg'
+            }, axiosConfig);
+          } catch (e1) {
+            response = await axios.post(`http://localhost:8000/api/query/voice`, {
+              audio: media.data,
+              mime_type: media.mimetype || 'audio/ogg'
+            }, axiosConfig);
+          }
+
+          const replyText = response.data?.text?.trim() || "";
+          const transcribed = response.data?.transcribed_text || "Voice Note";
+          
+          if (!replyText) {
+            console.log(`[SILENT VOICE NOTE] "${transcribed}" from ${userPhone} (No activation phrase or query -> Remaining silent)`);
+            return;
+          }
+
+          console.log(`[TRANSCRIPTION] "${transcribed}" -> Reply: "${replyText.substring(0, 80).replace(/\n/g, ' ')}..."`);
+          await msg.reply(`🎤 *Voice Note Transcribed* ("${transcribed}"):\n\n${replyText}`);
           return;
+        } else {
+          console.log(`[VOICE NOTE WARN] Failed downloading media buffer for ${userPhone}`);
         }
-
-        console.log(`[TRANSCRIPTION] "${transcribed}" -> Reply: "${replyText.substring(0, 80).replace(/\n/g, ' ')}..."`);
-        await msg.reply(`🎤 *Voice Note Transcribed* ("${transcribed}"):\n\n${replyText}`);
+      } catch (voiceErr) {
+        console.error(`[VOICE NOTE ERROR] Audio processing failed:`, voiceErr.message || voiceErr);
+        try {
+          await msg.reply("🌾 *KrishiMitra AI*:\nAudio voice note received. Could not transcribe audio. Please try speaking clearly or send as text query.");
+        } catch (e) {}
         return;
       }
     }

@@ -1,4 +1,68 @@
-const { Client, LocalAuth } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia, Message } = require('whatsapp-web.js');
+
+// Override Message.prototype.downloadMedia to fix WhatsApp Web 'ptt' -> 'audio' decryption type mismatch bug
+const originalDownloadMedia = Message.prototype.downloadMedia;
+Message.prototype.downloadMedia = async function() {
+  if (this.type === 'ptt' || this.type === 'audio') {
+    try {
+      const res = await this.client.pupPage.evaluate(async (msgId) => {
+        const Collections = window.require('WAWebCollections');
+        let msg = Collections?.Msg?.get(msgId);
+        if (!msg) {
+          const fetched = await Collections?.Msg?.getMessagesById([msgId]);
+          msg = fetched?.messages?.[0];
+        }
+        if (!msg) return null;
+
+        if (msg.mediaData && msg.mediaData.mediaStage !== 'RESOLVED') {
+          try {
+            await msg.downloadMedia({ downloadEvenIfExpensive: true, rmrReason: 1 });
+          } catch (e) {}
+        }
+
+        // Wait up to 6 seconds for mediaStage to transition to RESOLVED
+        for (let i = 0; i < 12; i++) {
+          if (msg.mediaData && (msg.mediaData.mediaStage === 'RESOLVED' || msg.mediaData.mediaStage === 'FETCHED')) {
+            break;
+          }
+          await new Promise(r => setTimeout(r, 500));
+        }
+
+        const downloadManager = window.require('WAWebDownloadManager').downloadManager;
+        const mockQpl = { addAnnotations: function () { return this; }, addPoint: function () { return this; } };
+
+        // Force 'audio' media type for decryption
+        const decryptedMedia = await downloadManager.downloadAndMaybeDecrypt({
+          directPath: msg.directPath,
+          encFilehash: msg.encFilehash,
+          filehash: msg.filehash,
+          mediaKey: msg.mediaKey,
+          mediaKeyTimestamp: msg.mediaKeyTimestamp,
+          type: 'audio',
+          signal: new AbortController().signal,
+          downloadQpl: mockQpl,
+        });
+
+        if (!decryptedMedia) return null;
+        const data = await window.WWebJS.arrayBufferToBase64Async(decryptedMedia);
+
+        return {
+          data,
+          mimetype: msg.mimetype || 'audio/ogg',
+          filename: msg.filename,
+          filesize: msg.size,
+        };
+      }, this.id._serialized);
+
+      if (res && res.data) {
+        return new MessageMedia(res.mimetype, res.data, res.filename, res.filesize);
+      }
+    } catch (err) {
+      console.log(`[PTT PATCH DOWNLOAD WARN] ${err.message || err}`);
+    }
+  }
+  return await originalDownloadMedia.call(this);
+};
 const qrcode = require('qrcode-terminal');
 const path = require('path');
 const fs = require('fs');
@@ -233,6 +297,7 @@ client.on('message_create', async (msg) => {
 
           const replyText = response.data?.text?.trim() || "";
           const transcribed = response.data?.transcribed_text || "Voice Note";
+          const audioB64 = response.data?.audio_base64;
           
           if (!replyText) {
             console.log(`[SILENT VOICE NOTE] "${transcribed}" from ${userPhone} (No activation phrase or query -> Remaining silent)`);
@@ -241,6 +306,16 @@ client.on('message_create', async (msg) => {
 
           console.log(`[TRANSCRIPTION] "${transcribed}" -> Reply: "${replyText.substring(0, 80).replace(/\n/g, ' ')}..."`);
           await msg.reply(`🎤 *Voice Note Transcribed* ("${transcribed}"):\n\n${replyText}`);
+
+          if (audioB64) {
+            try {
+              const voiceMedia = new MessageMedia('audio/mp3', audioB64, 'krishimitra_reply.mp3');
+              await client.sendMessage(msg.from, voiceMedia, { sendAudioAsVoice: true });
+              console.log(`[VOICE PLAYBACK] Sent audio voice reply to ${userPhone}`);
+            } catch (aErr) {
+              console.error(`[VOICE PLAYBACK ERROR] ${aErr.message || aErr}`);
+            }
+          }
           return;
         } else {
           console.log(`[VOICE NOTE WARN] Failed downloading media buffer for ${userPhone}`);
@@ -270,6 +345,7 @@ client.on('message_create', async (msg) => {
     }
 
     const replyText = response.data?.text?.trim() || "";
+    const audioB64 = response.data?.audio_base64;
 
     if (!replyText) {
       console.log(`[SILENT TEXT] Message from ${userPhone}: "${userQuery}" (No activation phrase -> Remaining silent)`);
@@ -278,6 +354,16 @@ client.on('message_create', async (msg) => {
 
     console.log(`[OUTGOING REPLY] Reply to ${userPhone}: "${replyText.substring(0, 80).replace(/\n/g, ' ')}..."`);
     await msg.reply(replyText);
+
+    if (audioB64 && isActivation) {
+      try {
+        const voiceMedia = new MessageMedia('audio/mp3', audioB64, 'krishimitra_reply.mp3');
+        await client.sendMessage(msg.from, voiceMedia, { sendAudioAsVoice: true });
+        console.log(`[VOICE PLAYBACK] Sent audio voice reply to ${userPhone}`);
+      } catch (aErr) {
+        console.error(`[VOICE PLAYBACK ERROR] ${aErr.message || aErr}`);
+      }
+    }
 
   } catch (err) {
     const mainErrStr = (err && err.message) ? err.message : String(err);

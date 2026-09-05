@@ -301,3 +301,30 @@ class AIService:
                 print(f"Gemini Audio Transcription error: {e}")
 
         return "Hi KrishiMitra what is the rate of Wheat in Indore"
+
+    @staticmethod
+    def text_to_speech_base64(text: str, lang: str = "en") -> Optional[str]:
+        """Convert response text into natural voice audio Base64 string via gTTS"""
+        if not text:
+            return None
+        try:
+            from gtts import gTTS
+            import io
+            import base64
+
+            # Clean markdown symbols for smooth reading
+            clean_text = re.sub(r"[\*\_~`#•]", "", text)
+            clean_text = re.sub(r"https?://\S+", "", clean_text).strip()
+            clean_text = clean_text[:350] # Read first 350 chars for concise voice reply
+
+            supported_langs = ["en", "hi", "kn", "ta"]
+            speak_lang = lang if lang in supported_langs else "en"
+
+            tts = gTTS(text=clean_text, lang=speak_lang)
+            fp = io.BytesIO()
+            tts.write_to_fp(fp)
+            fp.seek(0)
+            return base64.b64encode(fp.read()).decode("utf-8")
+        except Exception as e:
+            print(f"TTS audio generation error: {e}")
+            return None

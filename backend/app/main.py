@@ -862,12 +862,14 @@ def process_query():
     conn = get_db_connection()
     try:
         response_text = generate_chatbot_response(text, conn)
-        parsed = AIService.parse_query(text)
+        parsed = AIService.parse_query(text, db=conn)
         
         speech_url = f"/api/voice/tts?text={urllib.parse.quote(response_text[:30])}"
+        audio_b64 = AIService.text_to_speech_base64(response_text, lang=parsed.get("language", "en"))
         
         return jsonify({
             "text": response_text,
+            "audio_base64": audio_b64,
             "speech_url": speech_url,
             "intent": parsed.get("intent"),
             "commodity": parsed.get("commodity"),
@@ -905,12 +907,14 @@ def process_voice_query():
     conn = get_db_connection()
     try:
         response_text = generate_chatbot_response(transcribed_text, conn)
-        parsed = AIService.parse_query(transcribed_text)
+        parsed = AIService.parse_query(transcribed_text, db=conn)
         speech_url = f"/api/voice/tts?text={urllib.parse.quote(response_text[:30])}"
+        audio_b64 = AIService.text_to_speech_base64(response_text, lang=parsed.get("language", "en"))
 
         return jsonify({
             "transcribed_text": transcribed_text,
             "text": response_text,
+            "audio_base64": audio_b64,
             "speech_url": speech_url,
             "intent": parsed.get("intent"),
             "commodity": parsed.get("commodity"),

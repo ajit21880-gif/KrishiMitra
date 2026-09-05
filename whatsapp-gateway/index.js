@@ -183,7 +183,7 @@ client.on('ready', () => {
 });
 
 async function fetchVoiceNoteMedia(client, msg) {
-  for (let attempt = 1; attempt <= 4; attempt++) {
+  for (let attempt = 1; attempt <= 2; attempt++) {
     // 1. Direct browser context media resolution via window.Store.Msg & mediaBlob fallback
     try {
       const msgIdSerialized = msg.id && msg.id._serialized ? msg.id._serialized : null;
@@ -206,8 +206,8 @@ async function fetchVoiceNoteMedia(client, msg) {
               } catch (e) {}
             }
 
-            // Poll up to 10 iterations (5 seconds) for media download completion
-            for (let i = 0; i < 10; i++) {
+            // Poll up to 6 iterations (3 seconds) for media download completion
+            for (let i = 0; i < 6; i++) {
               if (m.mediaData && (m.mediaData.mediaStage === 'RESOLVED' || m.mediaData.mediaStage === 'FETCHED' || m.mediaData.mediaBlob)) {
                 break;
               }
@@ -266,24 +266,18 @@ async function fetchVoiceNoteMedia(client, msg) {
 
         if (bRes && bRes.data) {
           return new MessageMedia(bRes.mimetype, bRes.data, bRes.filename);
-        } else if (bRes && bRes.error) {
-          console.log(`[VOICE NOTE BROWSER STORE WARN ${attempt}] ${bRes.error}`);
         }
       }
-    } catch (e) {
-      console.log(`[VOICE NOTE EVAL WARN ${attempt}] ${e.message || String(e)}`);
-    }
+    } catch (e) {}
 
     // 2. Reload message model and try native downloadMedia as secondary fallback
     try {
       try { await msg.reload(); } catch (e) {}
       const media = await msg.downloadMedia();
       if (media && media.data) return media;
-    } catch (err) {
-      console.log(`[VOICE NOTE ATTEMPT ${attempt}] Native downloadMedia failed: ${err.message || String(err)}`);
-    }
+    } catch (err) {}
 
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 600));
   }
 
   return null;
@@ -344,13 +338,15 @@ client.on('message_create', async (msg) => {
           await msg.reply(`🎤 *Voice Note Transcribed* ("${transcribed}"):\n\n${replyText}`);
           return;
         } else {
-          console.log(`[VOICE NOTE WARN] Failed downloading media buffer for ${userPhone}`);
+          console.log(`[VOICE NOTE FALLBACK] Could not decode voice note buffer for ${userPhone} -> Replying with text prompt fallback`);
+          await msg.reply("🌾 *KrishiMitra AI*:\nAudio voice note received. Voice note processing is currently disabled on the WhatsApp Web Gateway.\n\nPlease type your query as text (e.g., *'Wheat rate in Punjab'* or *'Hi KrishiMitra, maize price in Indore'*).");
+          return;
         }
       } catch (voiceErr) {
         const vErrStr = (voiceErr && voiceErr.message) ? voiceErr.message : String(voiceErr);
         console.error(`[VOICE NOTE ERROR] Audio processing failed: ${vErrStr}`);
         try {
-          await msg.reply("🌾 *KrishiMitra AI*:\nAudio voice note received. Could not transcribe audio. Please try speaking clearly or send as text query.");
+          await msg.reply("🌾 *KrishiMitra AI*:\nAudio voice note received. Voice note processing is currently disabled on the WhatsApp Web Gateway.\n\nPlease type your query as text (e.g., *'Wheat rate in Punjab'* or *'Hi KrishiMitra, maize price in Indore'*).");
         } catch (e) {}
         return;
       }

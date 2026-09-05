@@ -71,14 +71,7 @@ def generate_chatbot_response(query_text: str, db: sqlite3.Connection) -> str:
         return texts["greeting"]
         
     if is_simple_greeting:
-        if lang == "hi":
-            return "🌾 कृषिमित्र एआई बोट शुरू करने के लिए कृपया *Hi KrishiMitra* या *नमस्ते कृषिमित्र* कहें या अपनी फसल का प्रश्न पूछें (जैसे 'इंदौर में गेहूं का भाव')!"
-        elif lang == "kn":
-            return "🌾 ಕೃಷಿಮಿತ್ರ AI ಬೋಟ್ ಸಕ್ರಿಯಗೊಳಿಸಲು ದಯವಿಟ್ಟು *Hi KrishiMitra* ಅಥವಾ *ನಮಸ್ಕಾರ ಕೃಷಿಮಿತ್ರ* ಎಂದು ಕಳುಹಿಸಿ (ಉದಾ: 'ಶಿವಮೊಗ್ಗದಲ್ಲಿ ಜೋಳದ ರೇಟ್')!"
-        elif lang == "ta":
-            return "🌾 கிருஷிமித்ரா AI பாட்டை செயல்படுத்த தயவுசெய்து *Hi KrishiMitra* அல்லது *வணக்கம் கிருஷிமித்ரா* என அனுப்பவும் (எ.கா: 'இந்தூரில் கோதுமை விலை')!"
-        else:
-            return "🌾 To activate KrishiMitra AI Bot, please send *Hi KrishiMitra* or ask your crop question (e.g., 'Wheat rate in Indore')."
+        return "" # Completely silent for plain Hi/Hello - only react when Hi KrishiMitra is said
 
     # Process Intent
     if intent == "price":

@@ -135,9 +135,14 @@ client.on('message_create', async (msg) => {
           }, { timeout: 15000 });
         }
 
-        const replyText = response.data?.text || "Sorry, I could not transcribe your voice message.";
+        const replyText = response.data?.text?.trim() || "";
         const transcribed = response.data?.transcribed_text || "Voice Note";
         
+        if (!replyText) {
+          console.log(`[SILENT VOICE NOTE] "${transcribed}" from ${userPhone} (No activation phrase or query -> Remaining silent)`);
+          return;
+        }
+
         console.log(`[TRANSCRIPTION] "${transcribed}" -> Reply: "${replyText.substring(0, 80).replace(/\n/g, ' ')}..."`);
         await msg.reply(`🎤 *Voice Note Transcribed* ("${transcribed}"):\n\n${replyText}`);
         return;
@@ -158,7 +163,12 @@ client.on('message_create', async (msg) => {
       response = await axios.post(`http://localhost:8000/api/query`, { text: userQuery }, { timeout: 10000 });
     }
 
-    const replyText = response.data?.text || "Sorry, I could not process your query at the moment. Please try again.";
+    const replyText = response.data?.text?.trim() || "";
+
+    if (!replyText) {
+      console.log(`[SILENT TEXT] Message from ${userPhone}: "${userQuery}" (No activation phrase -> Remaining silent)`);
+      return;
+    }
 
     console.log(`[OUTGOING REPLY] Reply to ${userPhone}: "${replyText.substring(0, 80).replace(/\n/g, ' ')}..."`);
     await msg.reply(replyText);

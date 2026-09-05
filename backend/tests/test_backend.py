@@ -74,9 +74,9 @@ class KrishiMitraTestCase(unittest.TestCase):
         self.assertIn("கிருஷிமித்ரா AI க்கு நல்வரவு", r_ta.json["text"])
 
     def test_simple_greeting_prompt(self):
-        # Generic Hi without KrishiMitra should ask user to say Hi KrishiMitra
+        # Generic Hi without KrishiMitra must return empty string (silent, no reaction)
         r = self.app.post("/api/query", json={"text": "Hi"})
-        self.assertIn("please send *Hi KrishiMitra*", r.json["text"])
+        self.assertEqual(r.json["text"], "")
 
 if __name__ == '__main__':
     unittest.main()

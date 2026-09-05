@@ -101,34 +101,20 @@ client.on('ready', () => {
 
 async function fetchVoiceNoteMedia(client, msg) {
   for (let attempt = 1; attempt <= 4; attempt++) {
-    // 1. Reload message model and try native downloadMedia
-    try {
-      try { await msg.reload(); } catch (e) {}
-      const media = await msg.downloadMedia();
-      if (media && media.data) return media;
-    } catch (err) {
-      console.log(`[VOICE NOTE ATTEMPT ${attempt}] Native downloadMedia failed: ${err.message || String(err)}`);
-    }
-
-    // 2. Direct browser context media resolution via window.Store & mediaBlob fallback
+    // 1. Direct browser context media resolution via WWebJS getMsg & mediaBlob fallback
     try {
       const msgIdSerialized = msg.id && msg.id._serialized ? msg.id._serialized : null;
       if (msgIdSerialized) {
         const bRes = await client.pupPage.evaluate(async (msgId) => {
           try {
-            // Safely locate Store message model
-            const MsgStore = window.Store ? window.Store.Msg : (window.require ? window.require('WAWebCollections')?.Msg : null);
-            if (!MsgStore) return { error: 'MsgStore is not accessible in browser' };
-
-            let m = MsgStore.get(msgId);
-            if (!m && MsgStore.getMessagesById) {
-              const fetched = await MsgStore.getMessagesById([msgId]);
-              m = fetched?.messages?.[0];
+            let m = window.WWebJS ? window.WWebJS.getMsg(msgId) : null;
+            if (!m && window.Store && window.Store.Msg) {
+              m = window.Store.Msg.get(msgId);
             }
-            if (!m) return { error: 'Message not found in Store' };
+            if (!m) return { error: 'Message object not found in browser Store' };
 
             // Trigger download if media stage is not resolved
-            if (m.mediaData && m.mediaData.mediaStage !== 'RESOLVED') {
+            if (m.mediaData && m.mediaData.mediaStage !== 'RESOLVED' && !m.mediaData.mediaBlob) {
               try {
                 await m.downloadMedia({ downloadEvenIfExpensive: true, rmrReason: 1 });
               } catch (e) {}
@@ -136,43 +122,48 @@ async function fetchVoiceNoteMedia(client, msg) {
 
             // Poll up to 10 iterations (5 seconds) for media download completion
             for (let i = 0; i < 10; i++) {
-              if (m.mediaData && (m.mediaData.mediaStage === 'RESOLVED' || m.mediaData.mediaStage === 'FETCHED')) {
+              if (m.mediaData && (m.mediaData.mediaStage === 'RESOLVED' || m.mediaData.mediaStage === 'FETCHED' || m.mediaData.mediaBlob)) {
                 break;
               }
               await new Promise(r => setTimeout(r, 500));
             }
 
-            let decrypted = null;
-            const dlMgr = window.Store ? window.Store.DownloadManager : null;
-            const mockQpl = { addAnnotations: function () { return this; }, addPoint: function () { return this; } };
-            const targetType = (m.type === 'ptt' || m.type === 'audio') ? 'audio' : m.type;
+            let arrayBuf = null;
 
-            if (dlMgr && dlMgr.downloadAndMaybeDecrypt) {
+            // 1. Try mediaBlob directly (most reliable for WhatsApp Web voice notes)
+            if (m.mediaData && m.mediaData.mediaBlob) {
               try {
-                decrypted = await dlMgr.downloadAndMaybeDecrypt({
-                  directPath: m.directPath,
-                  encFilehash: m.encFilehash,
-                  filehash: m.filehash,
-                  mediaKey: m.mediaKey,
-                  mediaKeyTimestamp: m.mediaKeyTimestamp,
-                  type: targetType,
-                  signal: new AbortController().signal,
-                  downloadQpl: mockQpl,
-                });
+                arrayBuf = await m.mediaData.mediaBlob.arrayBuffer();
               } catch (e) {}
             }
 
-            // Fallback: Read arrayBuffer directly from resolved mediaBlob
-            if (!decrypted && m.mediaData && m.mediaData.mediaBlob) {
-              try {
-                decrypted = await m.mediaData.mediaBlob.arrayBuffer();
-              } catch (e) {}
+            // 2. Fallback: Try downloadAndMaybeDecrypt with type: 'audio'
+            if (!arrayBuf) {
+              const dlMgr = window.Store ? window.Store.DownloadManager : null;
+              if (dlMgr && dlMgr.downloadAndMaybeDecrypt) {
+                try {
+                  const mockQpl = { addAnnotations: function () { return this; }, addPoint: function () { return this; } };
+                  arrayBuf = await dlMgr.downloadAndMaybeDecrypt({
+                    directPath: m.directPath,
+                    encFilehash: m.encFilehash,
+                    filehash: m.filehash,
+                    mediaKey: m.mediaKey,
+                    mediaKeyTimestamp: m.mediaKeyTimestamp,
+                    type: 'audio',
+                    signal: new AbortController().signal,
+                    downloadQpl: mockQpl,
+                  });
+                } catch (e) {}
+              }
             }
 
-            if (!decrypted) return { error: 'Media buffer resolution returned empty' };
-            const dataB64 = await window.WWebJS.arrayBufferToBase64Async(decrypted);
+            if (!arrayBuf) return { error: 'Media buffer resolution returned empty' };
+
+            const base64Data = window.WWebJS ? await window.WWebJS.arrayBufferToBase64Async(arrayBuf) : null;
+            if (!base64Data) return { error: 'Failed converting array buffer to base64' };
+
             return {
-              data: dataB64,
+              data: base64Data,
               mimetype: m.mimetype || 'audio/ogg',
               filename: m.filename || 'audio.ogg'
             };
@@ -191,12 +182,20 @@ async function fetchVoiceNoteMedia(client, msg) {
       console.log(`[VOICE NOTE EVAL WARN ${attempt}] ${e.message || String(e)}`);
     }
 
+    // 2. Reload message model and try native downloadMedia as secondary fallback
+    try {
+      try { await msg.reload(); } catch (e) {}
+      const media = await msg.downloadMedia();
+      if (media && media.data) return media;
+    } catch (err) {
+      console.log(`[VOICE NOTE ATTEMPT ${attempt}] Native downloadMedia failed: ${err.message || String(err)}`);
+    }
+
     await new Promise(r => setTimeout(r, 1000));
   }
 
   return null;
 }
-
 
 client.on('message_create', async (msg) => {
   try {
@@ -230,12 +229,12 @@ client.on('message_create', async (msg) => {
 
           let response;
           try {
-            response = await axios.post(`http://127.0.0.1:8000/api/query/voice`, {
+            response = await axios.post(`${BACKEND_URL}/api/query/voice`, {
               audio: media.data,
               mime_type: media.mimetype || 'audio/ogg'
             }, axiosConfig);
           } catch (e1) {
-            response = await axios.post(`http://localhost:8000/api/query/voice`, {
+            response = await axios.post(`http://127.0.0.1:8000/api/query/voice`, {
               audio: media.data,
               mime_type: media.mimetype || 'audio/ogg'
             }, axiosConfig);
@@ -243,7 +242,6 @@ client.on('message_create', async (msg) => {
 
           const replyText = response.data?.text?.trim() || "";
           const transcribed = response.data?.transcribed_text || "Voice Note";
-          const audioB64 = response.data?.audio_base64;
           
           if (!replyText) {
             console.log(`[SILENT VOICE NOTE] "${transcribed}" from ${userPhone} (No activation phrase or query -> Remaining silent)`);
@@ -252,16 +250,6 @@ client.on('message_create', async (msg) => {
 
           console.log(`[TRANSCRIPTION] "${transcribed}" -> Reply: "${replyText.substring(0, 80).replace(/\n/g, ' ')}..."`);
           await msg.reply(`🎤 *Voice Note Transcribed* ("${transcribed}"):\n\n${replyText}`);
-
-          if (audioB64) {
-            try {
-              const voiceMedia = new MessageMedia('audio/mp3', audioB64, 'krishimitra_reply.mp3');
-              await client.sendMessage(msg.from, voiceMedia, { sendAudioAsVoice: true });
-              console.log(`[VOICE PLAYBACK] Sent audio voice reply to ${userPhone}`);
-            } catch (aErr) {
-              console.error(`[VOICE PLAYBACK ERROR] ${aErr.message || aErr}`);
-            }
-          }
           return;
         } else {
           console.log(`[VOICE NOTE WARN] Failed downloading media buffer for ${userPhone}`);
@@ -285,13 +273,12 @@ client.on('message_create', async (msg) => {
 
     let response;
     try {
-      response = await axios.post(`http://127.0.0.1:8000/api/query`, { text: userQuery }, { timeout: 20000 });
+      response = await axios.post(`${BACKEND_URL}/api/query`, { text: userQuery }, { timeout: 20000 });
     } catch (e1) {
       response = await axios.post(`http://localhost:8000/api/query`, { text: userQuery }, { timeout: 20000 });
     }
 
     const replyText = response.data?.text?.trim() || "";
-    const audioB64 = response.data?.audio_base64;
 
     if (!replyText) {
       console.log(`[SILENT TEXT] Message from ${userPhone}: "${userQuery}" (No activation phrase -> Remaining silent)`);
@@ -300,16 +287,6 @@ client.on('message_create', async (msg) => {
 
     console.log(`[OUTGOING REPLY] Reply to ${userPhone}: "${replyText.substring(0, 80).replace(/\n/g, ' ')}..."`);
     await msg.reply(replyText);
-
-    if (audioB64 && isActivation) {
-      try {
-        const voiceMedia = new MessageMedia('audio/mp3', audioB64, 'krishimitra_reply.mp3');
-        await client.sendMessage(msg.from, voiceMedia, { sendAudioAsVoice: true });
-        console.log(`[VOICE PLAYBACK] Sent audio voice reply to ${userPhone}`);
-      } catch (aErr) {
-        console.error(`[VOICE PLAYBACK ERROR] ${aErr.message || aErr}`);
-      }
-    }
 
   } catch (err) {
     const mainErrStr = (err && err.message) ? err.message : String(err);

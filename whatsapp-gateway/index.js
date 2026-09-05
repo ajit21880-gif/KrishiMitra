@@ -11,9 +11,9 @@ Message.prototype.downloadMedia = async function() {
   if (this.type === 'ptt' || this.type === 'audio') {
     try {
       const res = await this.client.pupPage.evaluate(async (msgId) => {
-        let m = window.WWebJS ? window.WWebJS.getMsg(msgId) : null;
-        if (!m && window.Store && window.Store.Msg) {
-          m = window.Store.Msg.get(msgId);
+        let m = window.Store && window.Store.Msg ? window.Store.Msg.get(msgId) : null;
+        if (!m && window.require) {
+          try { m = window.require('WAWebCollections')?.Msg?.get(msgId); } catch (e) {}
         }
         if (!m) return null;
 
@@ -41,7 +41,7 @@ Message.prototype.downloadMedia = async function() {
         }
 
         if (!arrayBuf) {
-          const dlMgr = window.Store ? window.Store.DownloadManager : null;
+          const dlMgr = window.Store ? window.Store.DownloadManager : (window.require ? window.require('WAWebDownloadManager')?.downloadManager : null);
           if (dlMgr && dlMgr.downloadAndMaybeDecrypt) {
             try {
               const mockQpl = { addAnnotations: function () { return this; }, addPoint: function () { return this; } };
@@ -61,7 +61,13 @@ Message.prototype.downloadMedia = async function() {
 
         if (!arrayBuf) return null;
 
-        const dataB64 = window.WWebJS ? await window.WWebJS.arrayBufferToBase64Async(arrayBuf) : null;
+        let dataB64 = null;
+        if (window.WWebJS && window.WWebJS.arrayBufferToBase64Async) {
+          dataB64 = await window.WWebJS.arrayBufferToBase64Async(arrayBuf);
+        } else if (window.WWebJS && window.WWebJS.arrayBufferToBase64) {
+          dataB64 = window.WWebJS.arrayBufferToBase64(arrayBuf);
+        }
+
         if (!dataB64) return null;
 
         return {
@@ -178,22 +184,25 @@ client.on('ready', () => {
 
 async function fetchVoiceNoteMedia(client, msg) {
   for (let attempt = 1; attempt <= 4; attempt++) {
-    // 1. Direct browser context media resolution via WWebJS getMsg & mediaBlob fallback
+    // 1. Direct browser context media resolution via window.Store.Msg & mediaBlob fallback
     try {
       const msgIdSerialized = msg.id && msg.id._serialized ? msg.id._serialized : null;
       if (msgIdSerialized) {
         const bRes = await client.pupPage.evaluate(async (msgId) => {
           try {
-            let m = window.WWebJS ? window.WWebJS.getMsg(msgId) : null;
-            if (!m && window.Store && window.Store.Msg) {
-              m = window.Store.Msg.get(msgId);
+            let m = window.Store && window.Store.Msg ? window.Store.Msg.get(msgId) : null;
+            if (!m && window.require) {
+              try { m = window.require('WAWebCollections')?.Msg?.get(msgId); } catch (e) {}
             }
             if (!m) return { error: 'Message object not found in browser Store' };
 
             // Trigger download if media stage is not resolved
             if (m.mediaData && m.mediaData.mediaStage !== 'RESOLVED' && !m.mediaData.mediaBlob) {
               try {
+                const origType = m.type;
+                if (m.type === 'ptt') m.type = 'audio';
                 await m.downloadMedia({ downloadEvenIfExpensive: true, rmrReason: 1 });
+                m.type = origType;
               } catch (e) {}
             }
 
@@ -216,7 +225,7 @@ async function fetchVoiceNoteMedia(client, msg) {
 
             // 2. Fallback: Try downloadAndMaybeDecrypt with type: 'audio'
             if (!arrayBuf) {
-              const dlMgr = window.Store ? window.Store.DownloadManager : null;
+              const dlMgr = window.Store ? window.Store.DownloadManager : (window.require ? window.require('WAWebDownloadManager')?.downloadManager : null);
               if (dlMgr && dlMgr.downloadAndMaybeDecrypt) {
                 try {
                   const mockQpl = { addAnnotations: function () { return this; }, addPoint: function () { return this; } };
@@ -236,7 +245,13 @@ async function fetchVoiceNoteMedia(client, msg) {
 
             if (!arrayBuf) return { error: 'Media buffer resolution returned empty' };
 
-            const base64Data = window.WWebJS ? await window.WWebJS.arrayBufferToBase64Async(arrayBuf) : null;
+            let base64Data = null;
+            if (window.WWebJS && window.WWebJS.arrayBufferToBase64Async) {
+              base64Data = await window.WWebJS.arrayBufferToBase64Async(arrayBuf);
+            } else if (window.WWebJS && window.WWebJS.arrayBufferToBase64) {
+              base64Data = window.WWebJS.arrayBufferToBase64(arrayBuf);
+            }
+
             if (!base64Data) return { error: 'Failed converting array buffer to base64' };
 
             return {

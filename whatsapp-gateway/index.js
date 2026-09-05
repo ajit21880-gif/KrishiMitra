@@ -98,41 +98,6 @@ async function fetchVoiceNoteMedia(client, msg) {
   return null;
 }
 
-          if (!decryptedMedia) return { error: 'Decryption returned null' };
-          const base64Data = await window.WWebJS.arrayBufferToBase64Async(decryptedMedia);
-
-          return {
-            data: base64Data,
-            mimetype: m.mimetype || 'audio/ogg',
-            filename: m.filename || 'audio.ogg'
-          };
-        } catch (err) {
-          return { error: err.message || String(err) };
-        }
-      }, msgIdSerialized);
-
-      if (browserResult && browserResult.data) {
-        return browserResult;
-      } else if (browserResult && browserResult.error) {
-        console.log(`[VOICE NOTE] Browser download status: ${browserResult.error}`);
-      }
-    }
-  } catch (bErr) {
-    console.log(`[VOICE NOTE] Browser evaluation error: ${bErr.message || bErr}`);
-  }
-
-  // Attempt 3: Final retry after short delay
-  await new Promise(r => setTimeout(r, 1200));
-  try {
-    const refreshedMsg = await client.getMessageById(msg.id._serialized);
-    if (refreshedMsg) {
-      const media = await refreshedMsg.downloadMedia();
-      if (media && media.data) return media;
-    }
-  } catch (e) {}
-
-  return null;
-}
 
 client.on('message_create', async (msg) => {
   try {

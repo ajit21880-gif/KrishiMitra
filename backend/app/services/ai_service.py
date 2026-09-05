@@ -93,30 +93,30 @@ class AIService:
         if db:
             try:
                 cursor = db.cursor()
-                cursor.execute("SELECT DISTINCT commodity_name FROM commodities")
+                cursor.execute("SELECT DISTINCT commodity_name FROM commodities ORDER BY LENGTH(commodity_name) DESC")
                 rows = cursor.fetchall()
                 for r in rows:
                     cname = r["commodity_name"] if hasattr(r, "keys") else r[0]
-                    if cname and cname.lower() in text_lower:
+                    if cname and re.search(rf"(?:\s|^){re.escape(cname.lower())}(?:\s|$|[.,?!])", text_lower):
                         extracted_commodity = cname
                         break
                         
-                cursor.execute("SELECT DISTINCT state, district, mandi_name FROM mandis")
+                cursor.execute("SELECT DISTINCT state, district, mandi_name FROM mandis ORDER BY LENGTH(mandi_name) DESC")
                 m_rows = cursor.fetchall()
                 for r in m_rows:
                     st = r["state"] if hasattr(r, "keys") else r[0]
                     dt = r["district"] if hasattr(r, "keys") else r[1]
                     mn = r["mandi_name"] if hasattr(r, "keys") else r[2]
                     
-                    if dt and dt.lower() in text_lower:
+                    if dt and re.search(rf"(?:\s|^){re.escape(dt.lower())}(?:\s|$|[.,?!])", text_lower):
                         extracted_district = dt
                         extracted_state = st
                         break
-                    elif st and st.lower() in text_lower:
+                    elif st and re.search(rf"(?:\s|^){re.escape(st.lower())}(?:\s|$|[.,?!])", text_lower):
                         extracted_district = st
                         extracted_state = st
                         break
-                    elif mn and mn.lower() in text_lower:
+                    elif mn and re.search(rf"(?:\s|^){re.escape(mn.lower())}(?:\s|$|[.,?!])", text_lower):
                         extracted_district = dt or mn
                         extracted_state = st
                         break
@@ -224,18 +224,17 @@ class AIService:
         }
         headers = {"Content-Type": "application/json"}
         
-        # Rotate through multiple available Flash models to bypass the daily rate limit of 20 requests/model
+        # Rotate through valid Gemini models, with 4s timeout for fast fallback
         models = [
-            "gemini-3.6-flash",
-            "gemini-3.5-flash",
-            "gemini-2.5-flash",
-            "gemini-3.7-flash"
+            "gemini-1.5-flash",
+            "gemini-2.0-flash-exp",
+            "gemini-1.5-pro"
         ]
         
         for model in models:
             try:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-                response = requests.post(url, headers=headers, json=payload, timeout=8)
+                response = requests.post(url, headers=headers, json=payload, timeout=4)
                 if response.status_code == 200:
                     res_data = response.json()
                     content_text = res_data["candidates"][0]["content"]["parts"][0]["text"]
@@ -244,7 +243,7 @@ class AIService:
                     print(f"Gemini API ({model}) returned 429 (Rate Limit). Rotating to next model...")
                     continue
                 else:
-                    print(f"Gemini API ({model}) returned error code {response.status_code}: {response.text}")
+                    print(f"Gemini API ({model}) returned status code {response.status_code}")
             except Exception as e:
                 print(f"Error calling Gemini API ({model}): {e}")
                 
@@ -252,7 +251,7 @@ class AIService:
 
     @classmethod
     def parse_query(cls, text: str, db: Optional[Any] = None) -> Dict[str, Any]:
-        """Entrypoint for parsing query text. Falls back to dynamic DB parsing if API key is not present."""
+        """Entrypoint for parsing query text. Falls back to dynamic DB parsing if API key is not present or LLM fails/times out."""
         api_key = os.environ.get("GEMINI_API_KEY")
         if api_key:
             parsed = cls.parse_query_with_llm(text, api_key)

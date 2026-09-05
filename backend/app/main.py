@@ -225,7 +225,7 @@ def generate_chatbot_response(query_text: str, db: sqlite3.Connection) -> str:
     cursor = db.cursor()
     
     # 1. Parse text using AI Service
-    parsed = AIService.parse_query(query_text)
+    parsed = AIService.parse_query(query_text, db=db)
     lang = parsed.get("language", "en")
     if lang not in RESPONSES:
         lang = "en"

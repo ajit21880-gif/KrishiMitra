@@ -117,16 +117,29 @@ client.on('message_create', async (msg) => {
 
     // 1. Handle Voice Note / Audio Messages
     if (msg.hasMedia && (msg.type === 'ptt' || msg.type === 'audio')) {
-      console.log(`[INCOMING VOICE NOTE] Voice note received from ${userPhone}... downloading audio`);
+      console.log(`[INCOMING VOICE NOTE] Voice note received from ${userPhone}... preparing audio download`);
       try {
         let media = null;
-        for (let attempt = 1; attempt <= 3; attempt++) {
+        // Brief initial delay to allow WhatsApp Web client to initialize media key decryption
+        await new Promise(r => setTimeout(r, 800));
+
+        for (let attempt = 1; attempt <= 5; attempt++) {
           try {
-            media = await msg.downloadMedia();
+            // Re-fetch message if previous attempt failed
+            let targetMsg = msg;
+            if (attempt > 1 && msg.id && msg.id._serialized) {
+              try {
+                const refreshed = await client.getMessageById(msg.id._serialized);
+                if (refreshed) targetMsg = refreshed;
+              } catch (e) {}
+            }
+
+            media = await targetMsg.downloadMedia();
             if (media && media.data) break;
           } catch (dlErr) {
-            console.log(`[VOICE NOTE DOWNLOAD ATTEMPT ${attempt} FAILED] ${dlErr.message || dlErr}`);
-            await new Promise(r => setTimeout(r, 600));
+            const errStr = (dlErr && dlErr.message) ? dlErr.message : String(dlErr);
+            console.log(`[VOICE NOTE DOWNLOAD ATTEMPT ${attempt} FAILED] ${errStr}`);
+            await new Promise(r => setTimeout(r, 1000));
           }
         }
 
@@ -134,7 +147,7 @@ client.on('message_create', async (msg) => {
           console.log(`[VOICE NOTE DOWNLOADED] Size: ${media.data.length} chars, Mime: ${media.mimetype}`);
           
           const axiosConfig = {
-            timeout: 20000,
+            timeout: 25000,
             maxBodyLength: Infinity,
             maxContentLength: Infinity
           };
@@ -167,7 +180,8 @@ client.on('message_create', async (msg) => {
           console.log(`[VOICE NOTE WARN] Failed downloading media buffer for ${userPhone}`);
         }
       } catch (voiceErr) {
-        console.error(`[VOICE NOTE ERROR] Audio processing failed:`, voiceErr.message || voiceErr);
+        const vErrStr = (voiceErr && voiceErr.message) ? voiceErr.message : String(voiceErr);
+        console.error(`[VOICE NOTE ERROR] Audio processing failed: ${vErrStr}`);
         try {
           await msg.reply("🌾 *KrishiMitra AI*:\nAudio voice note received. Could not transcribe audio. Please try speaking clearly or send as text query.");
         } catch (e) {}
@@ -184,9 +198,9 @@ client.on('message_create', async (msg) => {
 
     let response;
     try {
-      response = await axios.post(`http://127.0.0.1:8000/api/query`, { text: userQuery }, { timeout: 10000 });
+      response = await axios.post(`http://127.0.0.1:8000/api/query`, { text: userQuery }, { timeout: 20000 });
     } catch (e1) {
-      response = await axios.post(`http://localhost:8000/api/query`, { text: userQuery }, { timeout: 10000 });
+      response = await axios.post(`http://localhost:8000/api/query`, { text: userQuery }, { timeout: 20000 });
     }
 
     const replyText = response.data?.text?.trim() || "";
@@ -200,7 +214,8 @@ client.on('message_create', async (msg) => {
     await msg.reply(replyText);
 
   } catch (err) {
-    console.error(`[ERROR] Failed processing WhatsApp message:`, err.message || err);
+    const mainErrStr = (err && err.message) ? err.message : String(err);
+    console.error(`[ERROR] Failed processing WhatsApp message: ${mainErrStr}`);
     try {
       await msg.reply("🌾 *KrishiMitra AI*:\nBackend server connection error. Please make sure the Python server (`python app/main.py`) is running on port 8000.");
     } catch (e) {}

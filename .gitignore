@@ -53,4 +53,5 @@ Thumbs.db
 # WhatsApp Gateway
 whatsapp-gateway/node_modules/
 whatsapp-gateway/.wwebjs_auth/
+whatsapp-gateway/.wwebjs_cache/
 whatsapp-gateway/uploads/

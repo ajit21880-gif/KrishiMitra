@@ -32,7 +32,7 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       <WebView 
-        source={{ uri: 'https://krishi-mitra-lilac-three.vercel.app/' }}
+        source={{ uri: 'https://krishi-mitra-crestsubarn.vercel.app/' }}
         style={styles.webview}
         javaScriptEnabled={true}
         domStorageEnabled={true}

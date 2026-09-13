@@ -220,7 +220,7 @@ RESPONSES = {
     }
 }
 
-APP_URL = os.environ.get("FRONTEND_APP_URL", "https://krishi-mitra-lilac-three.vercel.app")
+APP_URL = os.environ.get("FRONTEND_APP_URL", "https://krishi-mitra-crestsubarn.vercel.app")
 
 def generate_chatbot_response(query_text: str, db: sqlite3.Connection) -> str:
     cursor = db.cursor()

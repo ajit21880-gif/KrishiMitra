@@ -107,14 +107,23 @@ class MandiService:
         
         # 1. Instant SQLite DB Lookup (Sub-5ms)
         cursor.execute(
-            "SELECT id, mandi_name, state, district FROM mandis WHERE state LIKE ? AND (mandi_name LIKE ? OR mandi_name LIKE ?)",
+            "SELECT id, mandi_name, state, district, is_enam, enam_code FROM mandis WHERE state LIKE ? AND (mandi_name LIKE ? OR mandi_name LIKE ?)",
             (f"%{state}%", f"%{mandi_name}%", f"%{mandi_name.replace('APMC','').strip()}%")
         )
         mandi = cursor.fetchone()
         
+        if not mandi:
+            # Fallback matching with clean mandi name or district
+            clean_m = mandi_name.replace("APMC", "").replace("Market", "").strip()
+            cursor.execute(
+                "SELECT id, mandi_name, state, district, is_enam, enam_code FROM mandis WHERE (mandi_name LIKE ? OR district LIKE ?) LIMIT 1",
+                (f"%{clean_m}%", f"%{clean_m}%")
+            )
+            mandi = cursor.fetchone()
+        
         cursor.execute(
-            "SELECT id, commodity_name FROM commodities WHERE commodity_name LIKE ?",
-            (f"%{commodity_name}%",)
+            "SELECT id, commodity_name FROM commodities WHERE commodity_name LIKE ? OR local_name LIKE ?",
+            (f"%{commodity_name}%", f"%{commodity_name}%")
         )
         commodity = cursor.fetchone()
         
@@ -139,6 +148,13 @@ class MandiService:
                 else:
                     source_label = "AGMARKNET (Cached Rates)"
 
+                is_enam = bool(mandi["is_enam"]) if "is_enam" in mandi.keys() else False
+                enam_code = mandi["enam_code"] if "enam_code" in mandi.keys() else None
+                arrivals_qty = float(price_record["arrivals_qty"] or 0.0) if "arrivals_qty" in price_record.keys() else 0.0
+                variety = price_record["variety"] if "variety" in price_record.keys() and price_record["variety"] else "Common/FAQ"
+                grade = price_record["grade"] if "grade" in price_record.keys() and price_record["grade"] else "Grade A"
+                trade_type = price_record["trade_type"] if "trade_type" in price_record.keys() and price_record["trade_type"] else ("e-Auction" if is_enam else "Spot")
+
                 return {
                     "commodity": commodity["commodity_name"],
                     "mandi": mandi["mandi_name"],
@@ -147,7 +163,13 @@ class MandiService:
                     "modal_price": price_record["modal_price"],
                     "max_price": price_record["max_price"],
                     "source": source_label,
-                    "last_updated": display_date
+                    "last_updated": display_date,
+                    "is_enam": is_enam,
+                    "enam_code": enam_code,
+                    "arrivals_qty": arrivals_qty,
+                    "variety": variety,
+                    "grade": grade,
+                    "trade_type": trade_type
                 }
 
         # 2. Live Government AGMARKNET API Fallback if DB record missing
@@ -155,6 +177,11 @@ class MandiService:
         if api_key:
             live_data = cls.get_live_mandi_prices_from_gov(api_key, state, district, mandi_name, commodity_name)
             if live_data and live_data.get("modal_price", 0) > 0:
+                live_data.setdefault("is_enam", False)
+                live_data.setdefault("arrivals_qty", 0.0)
+                live_data.setdefault("variety", "Common")
+                live_data.setdefault("grade", "FAQ")
+                live_data.setdefault("trade_type", "Spot")
                 return live_data
 
         today_str = datetime.now().date().isoformat()
@@ -166,7 +193,13 @@ class MandiService:
             "modal_price": 0.0,
             "max_price": 0.0,
             "source": "AGMARKNET / Local DB",
-            "last_updated": today_str
+            "last_updated": today_str,
+            "is_enam": False,
+            "enam_code": None,
+            "arrivals_qty": 0.0,
+            "variety": "Common",
+            "grade": "FAQ",
+            "trade_type": "Spot"
         }
         
     @staticmethod
@@ -183,8 +216,12 @@ class MandiService:
         
         cursor.execute("SELECT id FROM mandis WHERE mandi_name LIKE ?", (f"%{mandi_name}%",))
         mandi = cursor.fetchone()
+        if not mandi:
+            clean_m = mandi_name.replace("APMC", "").replace("Market", "").strip()
+            cursor.execute("SELECT id FROM mandis WHERE mandi_name LIKE ? OR district LIKE ? LIMIT 1", (f"%{clean_m}%", f"%{clean_m}%"))
+            mandi = cursor.fetchone()
         
-        cursor.execute("SELECT id FROM commodities WHERE commodity_name LIKE ?", (f"%{commodity_name}%",))
+        cursor.execute("SELECT id FROM commodities WHERE commodity_name LIKE ? OR local_name LIKE ?", (f"%{commodity_name}%", f"%{commodity_name}%"))
         commodity = cursor.fetchone()
         
         if not mandi or not commodity:

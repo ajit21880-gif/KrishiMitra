@@ -16,6 +16,8 @@ const TRANSLATIONS: Record<string, any> = {
     app_title: "KrishiMitra AI",
     tagline: "Your Hyperlocal Mandi & Input Assistant",
     tab_assistant: "Voice Assistant",
+    not_found_alert: "No active price records found for this crop in this mandi.",
+    not_found_suggestion: "Would you like to check prices for other commodities or nearby mandis?",
     tab_mandi: "Mandi Rates",
     tab_market: "Marketplace",
     tab_whatsapp: "WhatsApp Chat",
@@ -86,6 +88,8 @@ const TRANSLATIONS: Record<string, any> = {
     app_title: "ಕೃಷಿಮಿತ್ರ AI",
     tagline: "ನಿಮ್ಮ ಹತ್ತಿರದ ಮಾರುಕಟ್ಟೆ ಮತ್ತು ಕೃಷಿ ಸಲಹೆಗಾರ",
     tab_assistant: "ಧ್ವನಿ ಸಹಾಯಕ",
+    not_found_alert: "ಈ ಮಾರುಕಟ್ಟೆಯಲ್ಲಿ ಈ ಬೆಳೆಗೆ ಯಾವುದೇ ಸಕ್ರಿಯ ಬೆಲೆ ದಾಖಲೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ.",
+    not_found_suggestion: "ನೀವು ಇತರ ಬೆಳೆಗಳ ದರಗಳನ್ನು ಪರಿಶೀಲಿಸಲು ಬಯಸುವಿರಾ?",
     tab_mandi: "ಮಾರುಕಟ್ಟೆ ದರ",
     tab_market: "ಖರೀದಿದಾರರು/ಅಂಗಡಿಗಳು",
     tab_whatsapp: "ವಾಟ್ಸಾಪ್ ಚಾಟ್",
@@ -117,48 +121,380 @@ const TRANSLATIONS: Record<string, any> = {
     msp: "ಬೆಂಬಲ ಬೆಲೆ (MSP)",
     greeting: "ನಮಸ್ಕಾರ! ನಿಮ್ಮ ಕೃಷಿ ಸಂಬಂಧಿತ ಪ್ರಶ್ನೆಗಳಿಗೆ ನಾನು ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?"
   },
+  gu: {
+    app_title: "કૃષિમિત્ર AI",
+    tagline: "તમારો હાયપરલોકલ મંડી અને ખેતી ઇનપુટ સહાયક",
+    tab_assistant: "અવાજ સહાયક",
+    tab_mandi: "મંડી ભાવ",
+    tab_market: "બજાર (માર્કેટ)",
+    tab_whatsapp: "વોટ્સએપ ચેટ",
+    btn_mic_start: "બોલવા માટે દબાવો",
+    btn_mic_stop: "સાંભળી રહ્યો છું... રોકવા માટે દબાવો",
+    btn_upload_csv: "ભાવ અપલોડ કરો (CSV)",
+    select_lang: "ભાષા પસંદ કરો",
+    select_state: "રાજ્ય પસંદ કરો",
+    select_district: "જિલ્લો પસંદ કરો",
+    select_mandi: "મંડી પસંદ કરો",
+    select_commodity: "પાક/અનાજ પસંદ કરો",
+    min_price: "ન્યૂનતમ ભાવ",
+    max_price: "મહત્તમ ભાવ",
+    modal_price: "મોડલ ભાવ",
+    gov_verified: "સત્તાવાર સરકારી સ્ત્રોત",
+    mandi_header: "મંડી ભાવ ડેશબોર્ડ",
+    trend_header: "છેલ્લા 7 દિવસના ભાવનું વલણ (₹/ક્વિન્ટલ)",
+    buyers_header: "ચકાસાયેલ જથ્થાબંધ વેપારીઓ અને ખરીદદારો",
+    dealers_header: "ખાતર, બિયારણ અને જંતુનાશક વિક્રેતાઓ",
+    stock_status: "સ્ટોકમાં:",
+    rating: "રેટિંગ",
+    whats_app_chat: "વોટ્સએપ",
+    call: "કૉલ કરો",
+    prompt_placeholder: "પૂછો જેમ કે 'અમદાવાદમાં સફરજનનો ભાવ'...",
+    send: "મોકલો",
+    offline_mode: "ઓફલાઇન મોડ (સંગ્રહિત ભાવો સક્રિય)",
+    last_updated: "છેલ્લું અપડેટ",
+    no_records: "કોઈ ભાવ રેકોર્ડ મળ્યા નથી. બીજી મંડી અથવા પાક પસંદ કરો.",
+    msp: "MSP ટેકાના ભાવ",
+    greeting: "નમસ્તે! હું તમારા ખેતી સંબંધિત પ્રશ્નોમાં કેવી રીતે મદદ કરી શકું?"
+  },
+  mr: {
+    app_title: "कृषिमित्र AI",
+    tagline: "तुमचा हायपरलोकल बाजार समिती व कृषी सहाय्यक",
+    tab_assistant: "व्हॉइस असिस्टंट",
+    tab_mandi: "बाजार भाव",
+    tab_market: "मार्केटप्लेस",
+    tab_whatsapp: "व्हॉट्सॲप चॅट",
+    btn_mic_start: "बोलण्यासाठी दाबा",
+    btn_mic_stop: "ऐकत आहे... थांबवण्यासाठी दाबा",
+    btn_upload_csv: "दर अपलोड करा (CSV)",
+    select_lang: "भाषा निवडा",
+    select_state: "राज्य निवडा",
+    select_district: "जिल्हा निवडा",
+    select_mandi: "बाजार समिती (मंडी) निवडा",
+    select_commodity: "पीक/धान्य निवडा",
+    min_price: "किमान दर",
+    max_price: "कमाल दर",
+    modal_price: "सर्वसाधारण दर",
+    gov_verified: "अधिकृत शासकीय स्रोत",
+    mandi_header: "बाजार भाव डॅशबोर्ड",
+    trend_header: "गेल्या ७ दिवसांचे बाजार भाव (₹/क्विंटल)",
+    buyers_header: "सत्यापित घाऊक व्यापारी व खरेदीदार",
+    dealers_header: "खते, बियाणे आणि कीटकनाशके विक्रेते",
+    stock_status: "उपलब्ध साठा:",
+    rating: "रेटिंग",
+    whats_app_chat: "व्हॉट्सॲप",
+    call: "कॉल करा",
+    prompt_placeholder: "विचारा जसे 'पुण्यात कांद्याचा भाव काय आहे'...",
+    send: "पाठवा",
+    offline_mode: "ऑफलाइन मोड (कॅश केलेले भाव सक्रिय)",
+    last_updated: "शेवटचे अपडेट",
+    no_records: "कोणतेही दर उपलब्ध नाहीत. दुसरी मंडी किंवा पीक निवडा.",
+    msp: "हमीभाव (MSP)",
+    greeting: "नमस्कार! मी आज आपल्या कृषी विषयक प्रश्नांमध्ये कशी मदत करू शकतो?"
+  },
   ta: {
     app_title: "கிருஷிமித்ரா AI",
-    tagline: "உங்கள் விவசாய மற்றும் சந்தை உதவியாளர்",
+    tagline: "உங்கள் பண்ணை & சந்தை விலை வழிகாட்டி",
     tab_assistant: "குரல் உதவியாளர்",
-    tab_mandi: "சந்தை விலைகள்",
-    tab_market: "சந்தை (வியாபாரிகள்)",
+    not_found_alert: "இந்த சந்தையில் இந்த பயிருக்கான விலை விவரங்கள் கிடைக்கவில்லை.",
+    not_found_suggestion: "மற்ற பயிர்களின் விலைகளை பார்க்க விரும்புகிறீர்களா?",
+    tab_mandi: "மண்டி விலை",
+    tab_market: "சந்தை",
     tab_whatsapp: "வாட்ஸ்அப் அரட்டை",
-    btn_mic_start: "பேச தட்டவும்",
-    btn_mic_stop: "கேட்கிறது... நிறுத்த தட்டவும்",
+    btn_mic_start: "பேச அழுத்தவும்",
+    btn_mic_stop: "கேட்கிறது... நிறுத்த அழுத்தவும்",
     btn_upload_csv: "விலை பதிவேற்றம் (CSV)",
     select_lang: "மொழியைத் தேர்ந்தெடுக்கவும்",
     select_state: "மாநிலத்தைத் தேர்ந்தெடுக்கவும்",
     select_district: "மாவட்டத்தைத் தேர்ந்தெடுக்கவும்",
-    select_mandi: "சந்தையைத் தேர்ந்தெடுக்கவும்",
+    select_mandi: "மண்டியைத் தேர்ந்தெடுக்கவும்",
     select_commodity: "பயிரைத் தேர்ந்தெடுக்கவும்",
     min_price: "குறைந்தபட்ச விலை",
     max_price: "அதிகபட்ச விலை",
     modal_price: "சராசரி விலை",
-    gov_verified: "அரசு அதிகாரப்பூர்வ தகவல்",
-    mandi_header: "சந்தை விலை பட்டியல்",
+    gov_verified: "அரசு அங்கீகாரம் பெற்றது",
+    mandi_header: "மண்டி விலை நிலவரம்",
     trend_header: "7 நாள் விலை போக்கு (₹/குவிண்டால்)",
     buyers_header: "சரிபார்க்கப்பட்ட மொத்த வியாபாரிகள்",
-    dealers_header: "உரம், விதை மற்றும் பூச்சிக்கொல்லி கடைகள்",
-    stock_status: "இருப்பு:",
+    dealers_header: "உரம், விதை மற்றும் பூச்சிக்கொல்லி விற்பனையாளர்கள்",
+    stock_status: "கையிருப்பு:",
     rating: "மதிப்பீடு",
     whats_app_chat: "வாட்ஸ்அப்",
-    call: "அழைக்கவும்",
-    prompt_placeholder: "கேளுங்கள் எ.கா. 'இந்தூரில் கோதுமை விலை'...",
+    call: "அழைக்க",
+    prompt_placeholder: "கேளுங்கள் எ.கா. 'சென்னையில் தக்காளி விலை'...",
     send: "அனுப்பு",
     offline_mode: "ஆஃப்லைன் பயன்முறை",
-    last_updated: "கடைசியாக புதுப்பிக்கப்பட்டது",
-    no_records: "விலை விவரங்கள் கிடைக்கவில்லை.",
-    msp: "ஆதரவு விலை (MSP)",
-    greeting: "வணக்கம்! உங்கள் விவசாய சந்தேகங்களுக்கு நான் எவ்வாறு உதவட்டும்?"
+    last_updated: "கடைசி புதுப்பிப்பு",
+    no_records: "விலை விவரங்கள் கிடைக்கவில்லை. வேறு மண்டி அல்லது பயிரைத் தேர்ந்தெடுக்கவும்.",
+    msp: "குறைந்தபட்ச ஆதரவு விலை (MSP)",
+    greeting: "வணக்கம்! உங்கள் விவசாயம் சார்ந்த கேள்விகளுக்கு நான் எவ்வாறு உதவ முடியும்?"
+  },
+  te: {
+    app_title: "కృషిమిత్ర AI",
+    tagline: "మీ స్థానిక మార్కెట్ & వ్యవసాయ సహాయకుడు",
+    tab_assistant: "వాయిస్ అసిస్టెంట్",
+    not_found_alert: "ఈ మార్కెట్‌లో ఈ పంటకు సంబంధించిన ధర రికార్డులు లభ్యం కాలేదు.",
+    not_found_suggestion: "మీరు ఇతర పంటల ధరలను చూడాలనుకుంటున్నారా?",
+    tab_mandi: "మార్కెట్ ధరలు",
+    tab_market: "మార్కెట్‌ప్లేస్",
+    tab_whatsapp: "వాట్సాప్ చాట్",
+    btn_mic_start: "మాట్లాడటానికి నొక్కండి",
+    btn_mic_stop: "వింటోంది... ఆపడానికి నొక్కండి",
+    btn_upload_csv: "ధరలను అప్‌లోడ్ చేయండి (CSV)",
+    select_lang: "భాషను ఎంచుకోండి",
+    select_state: "రాష్ట్రాన్ని ఎంచుకోండి",
+    select_district: "జిల్లాను ఎంచుకోండి",
+    select_mandi: "మార్కెట్/మండి ఎంచుకోండి",
+    select_commodity: "పంటను ఎంచుకోండి",
+    min_price: "కనిష్ట ధర",
+    max_price: "గరిష్ట ధర",
+    modal_price: "మోడల్ ధర",
+    gov_verified: "అధికారిక ప్రభుత్వ సమాచారం",
+    mandi_header: "మండి ధరల డ్యాష్‌బోర్డ్",
+    trend_header: "7 రోజుల ధరల ధోరణి (₹/క్వింటాల్)",
+    buyers_header: "ధృవీకరించబడిన హోల్‌సేల్ వ్యాపారులు",
+    dealers_header: "ఎరువులు, విత్తనాలు మరియు పురుగుమందుల డీలర్లు",
+    stock_status: "స్టాక్ లభ్యత:",
+    rating: "రేటింగ్",
+    whats_app_chat: "వాట్సాప్",
+    call: "కాల్ చేయండి",
+    prompt_placeholder: "అడగండి ఉదా. 'వరంగల్‌లో మిర్చి ధర ఎంత'...",
+    send: "పంపండి",
+    offline_mode: "ఆఫ్‌లైన్ మోడ్ (పాత ధరలు సక్రియంగా ఉన్నాయి)",
+    last_updated: "చివరి అప్‌డేట్",
+    no_records: "ధరల వివరాలు లభ్యం కాలేదు. వేరే మండి లేదా పంటను ఎంచుకోండి.",
+    msp: "కనీస మద్దతు ధర (MSP)",
+    greeting: "నమస్కారం! మీ వ్యవసాయ సంబంధిత సందేహాలకు నేను ఎలా సహాయపడగలను?"
+  },
+  ml: {
+    app_title: "കൃഷിമിത്ര AI",
+    tagline: "നിങ്ങളുടെ പ്രാദേശിക ചന്ത നിരക്കുകളും കൃഷി സഹായിയും",
+    tab_assistant: "വോയ്സ് അസിസ്റ്റന്റ്",
+    not_found_alert: "ഈ മാർക്കറ്റിൽ ഈ വിളയുടെ സജീവ വില വിവരങ്ങൾ ലഭ്യമല്ല.",
+    not_found_suggestion: "മറ്റ് വിളകളുടെ വില പരിശോധിക്കാൻ താൽപ്പര്യമുണ്ടോ?",
+    tab_mandi: "മാർക്കറ്റ് നിരക്ക്",
+    tab_market: "മാർക്കറ്റ്പ്ലെയ്സ്",
+    tab_whatsapp: "വാട്ട്സ്ആപ്പ് ചാറ്റ്",
+    btn_mic_start: "സംസാരിക്കാൻ അമർത്തുക",
+    btn_mic_stop: "ശ്രദ്ധിക്കുന്നു... നിർത്താൻ അമർത്തുക",
+    btn_upload_csv: "നിരക്കുകൾ അപ്‌ലോഡ് ചെയ്യുക (CSV)",
+    select_lang: "ഭാഷ തിരഞ്ഞെടുക്കുക",
+    select_state: "സംസ്ഥാനം തിരഞ്ഞെടുക്കുക",
+    select_district: "ജില്ല തിരഞ്ഞെടുക്കുക",
+    select_mandi: "മാർക്കറ്റ് തിരഞ്ഞെടുക്കുക",
+    select_commodity: "വിള തിരഞ്ഞെടുക്കുക",
+    min_price: "കുറഞ്ഞ നിരക്ക്",
+    max_price: "കൂടിയ നിരക്ക്",
+    modal_price: "ശരാശരി നിരക്ക്",
+    gov_verified: "ഔദ്യോഗിക സർക്കാർ സ്രോതസ്സ്",
+    mandi_header: "വിപണി നിരക്ക് ഡാഷ്‌ബോർഡ്",
+    trend_header: "കഴിഞ്ഞ 7 ദിവസങ്ങളിലെ വില വ്യതിയാനം (₹/ക്വിന്റൽ)",
+    buyers_header: "സ്ഥിരീകരിച്ച മൊത്തവ്യാപാരികൾ",
+    dealers_header: "വളം, വിത്ത്, കീടനാശിനി ഡീലർമാർ",
+    stock_status: "ലഭ്യമായ സ്റ്റോക്ക്:",
+    rating: "റേറ്റിംഗ്",
+    whats_app_chat: "വാട്ട്സ്ആപ്പ്",
+    call: "വിളിക്കുക",
+    prompt_placeholder: "ചോദിക്കൂ ഉദാഹരണത്തിന് 'ഏലക്കായുടെ ഇന്നത്തെ വില'...",
+    send: "അയക്കുക",
+    offline_mode: "ഓഫ്‌ലൈൻ മോഡ്",
+    last_updated: "അവസാനം പുതുക്കിയത്",
+    no_records: "വില വിവരങ്ങൾ ലഭ്യമല്ല. മറ്റൊരു മാർക്കറ്റോ വിളയോ തിരഞ്ഞെടുക്കുക.",
+    msp: "താങ്ങുവില (MSP)",
+    greeting: "നമസ്കാരം! നിങ്ങളുടെ കൃഷി സംശയങ്ങൾക്ക് ഞാൻ എങ്ങനെ സഹായിക്കണം?"
+  },
+  pa: {
+    app_title: "ਕ੍ਰਿਸ਼ੀਮਿੱਤਰ AI",
+    tagline: "ਤੁਹਾਡਾ ਹਾਈਪਰਲੋਕਲ ਮੰਡੀ ਤੇ ਖੇਤੀ ਸਹਾਇਕ",
+    tab_assistant: "ਆਵਾਜ਼ ਸਹਾਇਕ",
+    tab_mandi: "ਮੰਡੀ ਦੇ ਭਾਅ",
+    tab_market: "ਮਾਰਕੀਟਪਲੇਸ",
+    tab_whatsapp: "ਵ੍ਹਟਸਐਪ ਚੈਟ",
+    btn_mic_start: "ਬੋਲਣ ਲਈ ਦਬਾਓ",
+    btn_mic_stop: "ਸੁਣ ਰਿਹਾ ਹਾਂ... ਰੋਕਣ ਲਈ ਦਬਾਓ",
+    btn_upload_csv: "ਦਰ ਅੱਪਲੋਡ ਕਰੋ (CSV)",
+    select_lang: "ਭਾਸ਼ਾ ਚੁਣੋ",
+    select_state: "ਰਾਜ ਚੁਣੋ",
+    select_district: "ਜ਼ਿਲ੍ਹਾ ਚੁਣੋ",
+    select_mandi: "ਮੰਡੀ ਚੁਣੋ",
+    select_commodity: "ਫ਼ਸਲ/ਅਨਾਜ ਚੁਣੋ",
+    min_price: "ਘੱਟੋ-ਘੱਟ ਭਾਅ",
+    max_price: "ਵੱਧ ਤੋਂ ਵੱਧ ਭਾਅ",
+    modal_price: "ਮਾਡਲ ਭਾਅ",
+    gov_verified: "ਸਰਕਾਰੀ ਪ੍ਰਮਾਣਿਤ ਸਰੋਤ",
+    mandi_header: "ਮੰਡੀ ਭਾਅ ਡੈਸ਼ਬੋਰਡ",
+    trend_header: "ਪਿਛਲੇ 7 ਦਿਨਾਂ ਦੇ ਭਾਅ ਦਾ ਰੁਝਾਨ (₹/ਕੁਇੰਟਲ)",
+    buyers_header: "ਪ੍ਰਮਾਣਿਤ ਥੋਕ ਵਪਾਰੀ ਅਤੇ ਖਰੀਦਦਾਰ",
+    dealers_header: "ਖਾਦ, ਬੀਜ ਅਤੇ ਕੀਟਨਾਸ਼ਕ ਡੀਲਰ",
+    stock_status: "ਸਟਾਕ ਵਿੱਚ:",
+    rating: "ਰੇਟਿੰਗ",
+    whats_app_chat: "ਵ੍ਹਟਸਐਪ",
+    call: "ਕਾਲ ਕਰੋ",
+    prompt_placeholder: "ਪੁੱਛੋ ਜਿਵੇਂ 'ਲੁਧਿਆਣਾ ਵਿੱਚ ਕਣਕ ਦਾ ਭਾਅ'...",
+    send: "ਭੇਜੋ",
+    offline_mode: "ਔਫਲਾਈਨ ਮੋਡ",
+    last_updated: "ਆਖ਼ਰੀ ਅੱਪਡੇਟ",
+    no_records: "ਕੋਈ ਰਿਕਾਰਡ ਨਹੀਂ ਮਿਲਿਆ। ਦੂਜੀ ਮੰਡੀ ਜਾਂ ਫ਼ਸਲ ਚੁਣੋ।",
+    msp: "ਘੱਟੋ-ਘੱਟ ਸਮਰਥਨ ਮੁੱਲ (MSP)",
+    greeting: "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਅੱਜ ਤੁਹਾਡੀ ਖੇਤੀ ਸਬੰਧੀ ਕਿਵੇਂ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ?"
+  },
+  bn: {
+    app_title: "কৃষিমিত্র AI",
+    tagline: "আপনার স্থানীয় মান্ডি ও কৃষি সহায়ক",
+    tab_assistant: "ভয়েস সহকারী",
+    tab_mandi: "মান্ডির দর",
+    tab_market: "মার্কেটপ্লেস",
+    tab_whatsapp: "হোয়াটসঅ্যাপ চ্যাট",
+    btn_mic_start: "বলতে চাপুন",
+    btn_mic_stop: "শুনছি... থামাতে চাপুন",
+    btn_upload_csv: "দর আপলোড করুন (CSV)",
+    select_lang: "ভাষা নির্বাচন করুন",
+    select_state: "রাজ্য নির্বাচন করুন",
+    select_district: "জেলা নির্বাচন করুন",
+    select_mandi: "মান্ডি নির্বাচন করুন",
+    select_commodity: "ফসল নির্বাচন করুন",
+    min_price: "সর্বনিম্ন দর",
+    max_price: "সর্বোচ্চ দর",
+    modal_price: "মডেল দর",
+    gov_verified: "সরকারি অনুমোদিত তথ্য",
+    mandi_header: "মান্ডির দর ড্যাশবোর্ড",
+    trend_header: "বিগত ৭ দিনের দামের গতিপ্রকৃতি (₹/কুইন্টাল)",
+    buyers_header: "যাচাইকৃত পাইকারি ব্যবসায়ী ও ক্রেতা",
+    dealers_header: "সার, বীজ এবং কীটনাশক বিক্রেতা",
+    stock_status: "স্টকে আছে:",
+    rating: "রেটিং",
+    whats_app_chat: "হোয়াটসঅ্যাপ",
+    call: "কল করুন",
+    prompt_placeholder: "জিজ্ঞাসা করুন যেমন 'বর্ধমান মান্ডিতে চালের দাম'...",
+    send: "পাঠান",
+    offline_mode: "অফলাইন মোড",
+    last_updated: "সর্বশেষ আপডেট",
+    no_records: "কোনো তথ্য পাওয়া যায়নি। অন্য মান্ডি বা ফসল বেছে নিন।",
+    msp: "ন্যূনতম সহায়ক মূল্য (MSP)",
+    greeting: "নমস্কার! আজ আপনার কৃষি সংক্রান্ত বিষয়ে আমি কীভাবে সাহায্য করতে পারি?"
+  },
+  or: {
+    app_title: "କୃଷିମିତ୍ର AI",
+    tagline: "ଆପଣଙ୍କ ହାଇପରଲୋକାଲ ମଣ୍ଡି ଓ କୃଷି ସହାୟକ",
+    tab_assistant: "ଭଏସ୍ ସହାୟକ",
+    not_found_alert: "ଏହି ମଣ୍ଡିରେ ଏହି ଫସଲ ପାଇଁ କୌଣସି ସକ୍ରିୟ ଦର ମିଳିଲା ନାହିଁ।",
+    not_found_suggestion: "ଆପଣ ଅନ୍ୟ କୌଣସି ଫସଲର ଦର ଯାଞ୍ଚ କରିବାକୁ ଚାହାଁନ୍ତି କି?",
+    tab_mandi: "ମଣ୍ଡି ଦର",
+    tab_market: "ବଜାର (ମାର୍କେଟ)",
+    tab_whatsapp: "ହ୍ୱାଟ୍ସଆପ୍ ଚାଟ୍",
+    btn_mic_start: "କହିବା ପାଇଁ ଦବାନ୍ତୁ",
+    btn_mic_stop: "ଶୁଣୁଛି... ବନ୍ଦ କରିବା ପାଇଁ ଦବାନ୍ତୁ",
+    btn_upload_csv: "ଦର ଅପଲୋଡ କରନ୍ତୁ (CSV)",
+    select_lang: "ଭାଷା ବାଛନ୍ତୁ",
+    select_state: "ରାଜ୍ୟ ବାଛନ୍ତୁ",
+    select_district: "ଜିଲ୍ଲା ବାଛନ୍ତୁ",
+    select_mandi: "ମଣ୍ଡି ବାଛନ୍ତୁ",
+    select_commodity: "ଫସଲ/ଶସ୍ୟ ବାଛନ୍ତୁ",
+    min_price: "ସର୍ବନିମ୍ନ ଦର",
+    max_price: "ସର୍ବାଧିକ ଦର",
+    modal_price: "ମଡେଲ ଦର",
+    gov_verified: "ସରକାରୀ ପ୍ରମାଣିତ ତଥ୍ୟ",
+    mandi_header: "ମଣ୍ଡି ଦର ଡ୍ୟାସବୋର୍ଡ",
+    trend_header: "୭ ଦିନର ଦର ଟ୍ରେଣ୍ଡ (₹/କ୍ୱିଣ୍ଟାଲ)",
+    buyers_header: "ପ୍ରମାଣିତ ହୋଲସେଲ ବ୍ୟବସାୟୀ ଓ କ୍ରେତା",
+    dealers_header: "ସାର, ବିହନ ଏବଂ କୀଟନାଶକ ବିକ୍ରେତା",
+    stock_status: "ଷ୍ଟକରେ ଅଛି:",
+    rating: "ରେଟିଂ",
+    whats_app_chat: "ହ୍ୱାଟ୍ସଆପ୍",
+    call: "କଲ୍ କରନ୍ତୁ",
+    prompt_placeholder: "ପଚାରନ୍ତୁ ଯେପରି 'ଭୁବନେଶ୍ୱରରେ ଧାନର ଦର'...",
+    send: "ପଠାନ୍ତୁ",
+    offline_mode: "ଅଫଲାଇନ୍ ମୋଡ୍",
+    last_updated: "ଶେଷ ଅପଡେଟ୍",
+    no_records: "କୌଣସି ଦର ରେକର୍ଡ ମିଳିଲା ନାହିଁ। ଅନ୍ୟ ମଣ୍ଡି ବାଛନ୍ତୁ।",
+    msp: "ସର୍ବନିମ୍ନ ସହାୟକ ମୂଲ୍ୟ (MSP)",
+    greeting: "ନମସ୍କାର! ଆଜି ଆପଣଙ୍କ କୃଷି ସମ୍ବନ୍ଧୀୟ ପ୍ରଶ୍ନରେ ମୁଁ କିପରି ସାହାଯ୍ୟ କରିପାରିବି?"
+  },
+  as: {
+    app_title: "কৃষিমিত্ৰ AI",
+    tagline: "আপোনাৰ স্থানীয় মণ্ডি আৰু কৃষি সহায়ক",
+    tab_assistant: "ভইচ সহায়ক",
+    tab_mandi: "মণ্ডিৰ দৰ",
+    tab_market: "বজাৰ (মার্কেট)",
+    tab_whatsapp: "হোৱাটছএপ চেট",
+    btn_mic_start: "ক'বলৈ টিপক",
+    btn_mic_stop: "শুনি আছোঁ... বন্ধ কৰিবলৈ টিপক",
+    btn_upload_csv: "দৰ আপলোড কৰক (CSV)",
+    select_lang: "ভাষা বাছক",
+    select_state: "ৰাজ্য বাছক",
+    select_district: "জিলা বাছক",
+    select_mandi: "মণ্ডি বাছক",
+    select_commodity: "শস্য বাছক",
+    min_price: "সৰ্বনিম্ন দৰ",
+    max_price: "সৰ্বোচ্চ দৰ",
+    modal_price: "মডেল দৰ",
+    gov_verified: "চৰকাৰী প্ৰমাণিত উৎস",
+    mandi_header: "মণ্ডিৰ দৰ ডেশ্বব'ৰ্ড",
+    trend_header: "৭ দিনৰ দৰৰ গতিধাৰা (₹/কুইণ্টল)",
+    buyers_header: "প্ৰমাণিত পাইকাৰী ব্যৱসায়ী আৰু ক্ৰেতা",
+    dealers_header: "সাৰ, বীজ আৰু কীটনাশক বিক্ৰেতা",
+    stock_status: "ষ্টকত আছে:",
+    rating: "ৰেটিং",
+    whats_app_chat: "হোৱাটছএপ",
+    call: "কল কৰক",
+    prompt_placeholder: "সোধক যেনে 'গুৱাহাটীত আলুৰ দাম কিমান'...",
+    send: "প্ৰেৰণ কৰক",
+    offline_mode: "অফলাইন ম'ড",
+    last_updated: "সৰ্বশেষ আপডেট",
+    no_records: "কোনো দৰ পোৱা নগ'ল। অন্য মণ্ডি বা শস্য বাছক।",
+    msp: "নূন্যতম সমৰ্থন মূল্য (MSP)",
+    greeting: "নমস্কাৰ! আজি আপোনাৰ কৃষি সম্বন্ধীয় সমস্যাত মই কেনেকৈ সহায় কৰিব পাৰোঁ?"
+  },
+  ks: {
+    app_title: "کرٛشۍمِتَر AI",
+    tagline: "تُہُند لوکل منڈی تہٕ کھیتی باڑی مددگار",
+    tab_assistant: "آواز مددگار",
+    tab_mandi: "منڈی قٟمَتھ",
+    tab_market: "مارکیٹ",
+    tab_whatsapp: "واٹس ایپ چیٹ",
+    btn_mic_start: "تھاو کَتھ کرنہٕ باپتھ",
+    btn_mic_stop: "بوزان چُھ... رُکاو کَتھ",
+    btn_upload_csv: "قٟمَتھ اَپلوڈ کٔرِو (CSV)",
+    select_lang: "زَبان چُھنوو",
+    select_state: "ریاسَتھ چُھنوو",
+    select_district: "ضِلہٕ چُھنوو",
+    select_mandi: "منڈی چُھنوو",
+    select_commodity: "فَصٕل چُھنوو",
+    min_price: "کم ترین قٟمَتھ",
+    max_price: "زیٛادٕ قٟمَتھ",
+    modal_price: "عام قٟمَتھ",
+    gov_verified: "سرکٲرۍ تصدیق شُدٕ",
+    mandi_header: "منڈی قٟمَتھ ڈیش بورڈ",
+    trend_header: "۷ دۄہَن ہُنٛد قٟمَتھ رُجحان (₹/کوئنٹل)",
+    buyers_header: "تصدیق شُدٕ ہول سیل تاجر",
+    dealers_header: "کھاد، بیٚول تہٕ دوا وِکنے وٲلۍ",
+    stock_status: "سٹاک مَنٛز:",
+    rating: "ریٹنگ",
+    whats_app_chat: "واٹس ایپ",
+    call: "کال کٔرِو",
+    prompt_placeholder: "پرِژھِو مِثال: 'سوپور مَنٛز ژوٗنٛٹھ ہُنٛد قٟمَتھ' ...",
+    send: "سوزِو",
+    offline_mode: "آف لائن موڈ",
+    last_updated: "ٲخری اَپڈیٹ",
+    no_records: "کانٛہہ قٟمَتھ مِلیو نہٕ۔ دوٚیم منڈی چُھنوو۔",
+    msp: "سرکٲرۍ حِمایتی قٟمَتھ (MSP)",
+    greeting: "سلام! بٕہ کِتھ پٲٹھۍ ہٮ۪کاو تُہنٛز کٔشیرۍ کھیتی باڑی سوالَن مَنٛز مَدَتھ کٔرِتھ؟"
   }
 };
 
 const LANGUAGES = [
   { code: "en", name: "English" },
-  { code: "hi", name: "हिन्दी" },
-  { code: "kn", name: "ಕನ್ನಡ" },
-  { code: "ta", name: "தமிழ்" }
+  { code: "hi", name: "हिंदी (Hindi)" },
+  { code: "kn", name: "ಕನ್ನಡ (Kannada)" },
+  { code: "gu", name: "ગુજરાતી (Gujarati)" },
+  { code: "mr", name: "मराठी (Marathi)" },
+  { code: "ta", name: "தமிழ் (Tamil)" },
+  { code: "te", name: "తెలుగు (Telugu)" },
+  { code: "ml", name: "മലയാളം (Malayalam)" },
+  { code: "pa", name: "ਪੰਜਾਬੀ (Punjabi)" },
+  { code: "bn", name: "বাংলা (Bengali)" },
+  { code: "or", name: "ଓଡ଼ିଆ (Odia)" },
+  { code: "as", name: "অসমীয়া (Assamese)" },
+  { code: "ks", name: "کٲشُر (Kashmiri)" }
 ];
 
 export default function Home() {
@@ -189,6 +525,7 @@ export default function Home() {
   
   const [priceData, setPriceData] = useState<any>(null);
   const [trendData, setTrendData] = useState<any[]>([]);
+  const [upagOutlook, setUpagOutlook] = useState<any>(null);
 
   // Marketplace states
   const [buyers, setBuyers] = useState<any[]>([]);
@@ -308,26 +645,30 @@ export default function Home() {
         .replace(/\n+/g, ". ");
 
       const utterance = new SpeechSynthesisUtterance(cleanText);
+      const voiceLangs: Record<string, string> = {
+        hi: "hi-IN", kn: "kn-IN", gu: "gu-IN", mr: "mr-IN",
+        ta: "ta-IN", te: "te-IN", ml: "ml-IN", pa: "pa-IN", bn: "bn-IN",
+        or: "or-IN", as: "as-IN", ks: "ur-IN", en: "en-IN"
+      };
+      utterance.lang = voiceLangs[lang] || "en-IN";
       utterance.rate = 0.95; // Calm, natural pacing
       utterance.pitch = 1.05; // Warm, pleasant pitch
-      
-      if (lang === "kn") {
-        utterance.lang = "kn-IN";
-      } else if (lang === "hi") {
-        utterance.lang = "hi-IN";
-      } else if (lang === "ta") {
-        utterance.lang = "ta-IN";
-      } else {
-        utterance.lang = "en-IN";
-      }
 
       // Try selecting preferred native voice engine if available
       try {
         const voices = window.speechSynthesis.getVoices();
+        const targetLangCode = (voiceLangs[lang] || "en-IN").split("-")[0];
         const preferredVoice = voices.find(v => 
-          (lang === "hi" && (v.lang.includes("hi") || v.name.includes("Hindi"))) ||
-          (lang === "kn" && (v.lang.includes("kn") || v.name.includes("Kannada"))) ||
-          (lang === "ta" && (v.lang.includes("ta") || v.name.includes("Tamil"))) ||
+          v.lang.toLowerCase().startsWith(targetLangCode) ||
+          v.lang.toLowerCase().includes(targetLangCode) ||
+          (lang === "or" && v.name.toLowerCase().includes("odia")) ||
+          (lang === "as" && v.name.toLowerCase().includes("assamese")) ||
+          (lang === "bn" && v.name.toLowerCase().includes("bengali")) ||
+          (lang === "mr" && v.name.toLowerCase().includes("marathi")) ||
+          (lang === "gu" && v.name.toLowerCase().includes("gujarati")) ||
+          (lang === "te" && v.name.toLowerCase().includes("telugu")) ||
+          (lang === "pa" && v.name.toLowerCase().includes("punjabi")) ||
+          (lang === "ml" && v.name.toLowerCase().includes("malayalam")) ||
           (lang === "en" && (v.lang.includes("en-IN") || v.name.includes("India")))
         );
         if (preferredVoice) {
@@ -423,6 +764,194 @@ export default function Home() {
     }
   }, [states, commodities]);
 
+  // Handle internal in-place link navigation (e.g. from chatbot "Click Here" trends link)
+  const handleInternalLinkClick = (url: string): boolean => {
+    try {
+      let parsedUrl: URL;
+      if (url.startsWith("http://") || url.startsWith("https://")) {
+        parsedUrl = new URL(url);
+      } else {
+        parsedUrl = new URL(url, "https://krishi-mitra.local");
+      }
+
+      const tabParam = parsedUrl.searchParams.get("tab");
+      const mandiParam = parsedUrl.searchParams.get("mandi");
+      const commodityParam = parsedUrl.searchParams.get("commodity");
+
+      if (tabParam === "marketplace" || tabParam === "market") {
+        setActiveTab("market");
+        return true;
+      } else if (tabParam === "whatsapp") {
+        setActiveTab("whatsapp");
+        return true;
+      } else if (tabParam === "assistant") {
+        setActiveTab("assistant");
+        return true;
+      }
+
+      if (tabParam === "mandi" || mandiParam) {
+        setActiveTab("mandi");
+        if (mandiParam) {
+          fetch(`${BACKEND_URL}/api/mandi/details?mandi_name=${encodeURIComponent(mandiParam)}`)
+            .then(res => res.json())
+            .then(details => {
+              if (details && details.state && details.district) {
+                setSelectedState(details.state);
+                setSelectedDistrict(details.district);
+                setSelectedMandi(details.mandi_name);
+                if (commodityParam) {
+                  setSelectedCommodity(commodityParam);
+                }
+              }
+            })
+            .catch(err => console.error("Error navigating to mandi details:", err));
+        } else if (commodityParam) {
+          setSelectedCommodity(commodityParam);
+        }
+        return true;
+      }
+    } catch (e) {
+      console.error("Error parsing link URL:", e);
+    }
+    return false;
+  };
+
+  // Validate and sanitize URLs to allow only safe http/https or relative paths
+  const sanitizeLinkUrl = (url: string): string | null => {
+    if (!url) return null;
+    const trimmed = url.trim();
+    if (!trimmed) return null;
+
+    try {
+      // Allow only root-relative paths (single leading slash, not protocol-relative).
+      if (trimmed.startsWith("/")) {
+        if (!/^\/(?!\/)/.test(trimmed)) {
+          return null;
+        }
+        const parsedRelative = new URL(trimmed, "https://krishimitra.local");
+        return parsedRelative.pathname + parsedRelative.search + parsedRelative.hash;
+      }
+
+      // Allow only absolute http/https URLs and return canonicalized href.
+      const parsed = new URL(trimmed);
+      if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+        return parsed.href;
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  };
+
+  // Render user message: strictly plain formatted text with bold markers only. Zero anchor tags or linkification.
+  const renderUserMessage = (text: string) => {
+    const lines = text.split("\n");
+    return lines.map((line, lineIdx) => {
+      if (!line.trim()) {
+        return <span key={lineIdx} className="block h-2" />;
+      }
+      return (
+        <span key={lineIdx} className="block leading-relaxed break-words [overflow-wrap:anywhere]">
+          {renderBoldText(line, `${lineIdx}-user-full`, true)}
+        </span>
+      );
+    });
+  };
+
+  // Helper to render formatted chat messages with bold, clickable internal hyperlinks, and zero overflow
+  const renderFormattedMessage = (text: string, isUser = false) => {
+    if (isUser) {
+      return renderUserMessage(text);
+    }
+    const lines = text.split("\n");
+    return lines.map((line, lineIdx) => {
+      if (!line.trim()) {
+        return <span key={lineIdx} className="block h-2" />;
+      }
+
+      // Regex matches markdown link [label](url) OR bare URL http(s)://...
+      const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s\)]+|\/[^\s\)]+)\)|(https?:\/\/[^\s\)]+)/g;
+      const elements: React.ReactNode[] = [];
+      let lastIndex = 0;
+      let match;
+
+      while ((match = linkRegex.exec(line)) !== null) {
+        if (match.index > lastIndex) {
+          elements.push(renderBoldText(line.substring(lastIndex, match.index), `${lineIdx}-${lastIndex}`, false));
+        }
+
+        const isMdLink = Boolean(match[1] && match[2]);
+        const linkText = isMdLink ? match[1] : "Click Here";
+        const rawLinkUrl = isMdLink ? match[2] : match[3];
+        const safeLinkUrl = sanitizeLinkUrl(rawLinkUrl);
+
+        if (!safeLinkUrl) {
+          elements.push(renderBoldText(match[0], `${lineIdx}-raw-${match.index}`, false));
+          lastIndex = match.index + match[0].length;
+          continue;
+        }
+
+        elements.push(
+          <button
+            type="button"
+            key={`${lineIdx}-link-${match.index}`}
+            onClick={() => {
+              if (!handleInternalLinkClick(safeLinkUrl)) {
+                try {
+                  const targetUrl = new URL(safeLinkUrl, window.location.origin);
+                  if (targetUrl.protocol === "http:" || targetUrl.protocol === "https:") {
+                    window.open(targetUrl.href, "_blank", "noopener,noreferrer");
+                  }
+                } catch {
+                  // ignore
+                }
+              }
+            }}
+            className="font-bold underline underline-offset-2 transition-colors cursor-pointer inline-flex items-center gap-0.5 mx-0.5 break-all text-primary-600 hover:text-primary-800 decoration-primary-400 hover:decoration-primary-700 bg-green-50/80 hover:bg-green-100/90 px-1.5 py-0.5 rounded text-left"
+          >
+            {linkText}
+            <span className="text-[11px] opacity-75">↗</span>
+          </button>
+        );
+
+        lastIndex = match.index + match[0].length;
+      }
+
+      if (lastIndex < line.length) {
+        elements.push(renderBoldText(line.substring(lastIndex), `${lineIdx}-${lastIndex}`, false));
+      }
+
+      return (
+        <span key={lineIdx} className="block break-words [overflow-wrap:anywhere]">
+          {elements}
+        </span>
+      );
+    });
+  };
+
+  const renderBoldText = (str: string, keyPrefix: string, isUser = false): React.ReactNode => {
+    const boldRegex = /\*([^*]+)\*/g;
+    const parts: React.ReactNode[] = [];
+    let lastIdx = 0;
+    let bMatch;
+
+    while ((bMatch = boldRegex.exec(str)) !== null) {
+      if (bMatch.index > lastIdx) {
+        parts.push(str.substring(lastIdx, bMatch.index));
+      }
+      parts.push(
+        <strong key={`${keyPrefix}-b-${bMatch.index}`} className={isUser ? "font-bold text-white" : "font-bold text-gray-900"}>
+          {bMatch[1]}
+        </strong>
+      );
+      lastIdx = bMatch.index + bMatch[0].length;
+    }
+    if (lastIdx < str.length) {
+      parts.push(str.substring(lastIdx));
+    }
+    return parts.length > 0 ? parts : str;
+  };
+
   const openReservationModal = (dealer: any) => {
     setSelectedDealerForReservation(dealer);
     setReservationSuccess(null);
@@ -508,7 +1037,7 @@ export default function Home() {
       .then(res => res.json())
       .then(data => {
         setCommodities(data);
-        if (selectedMandi && selectedCommodity && !data.some((c: any) => c.commodity_name === selectedCommodity)) {
+        if (selectedMandi && selectedCommodity && !data.some((c: any) => c.commodity_name?.toLowerCase() === selectedCommodity.toLowerCase())) {
           setSelectedCommodity("");
         }
       })
@@ -532,7 +1061,15 @@ export default function Home() {
         setTrendData(data.trend || []);
       })
       .catch(() => setTrendData([]));
-  }, [selectedMandi, selectedCommodity]);
+
+    // Fetch Phase 5 UPAg Market Outlook & Advisory
+    fetch(`${BACKEND_URL}/api/advisory/market-outlook?state=${encodeURIComponent(selectedState)}&commodity=${encodeURIComponent(selectedCommodity)}`)
+      .then(res => res.json())
+      .then(data => {
+        setUpagOutlook(data.error ? null : data);
+      })
+      .catch(() => setUpagOutlook(null));
+  }, [selectedMandi, selectedCommodity, selectedState]);
 
   // Cancel active speech when switching tabs
   useEffect(() => {
@@ -605,19 +1142,13 @@ export default function Home() {
       setIsListening(true);
       const recognition = new SpeechRecognition();
       
-      // Determine language mappings
-      let speechLang = "en-IN";
-      if (lang === "hi") speechLang = "hi-IN";
-      else if (lang === "kn") speechLang = "kn-IN";
-      else if (lang === "mr") speechLang = "mr-IN";
-      else if (lang === "ta") speechLang = "ta-IN";
-      else if (lang === "te") speechLang = "te-IN";
-      else if (lang === "ml") speechLang = "ml-IN";
-      else if (lang === "gu") speechLang = "gu-IN";
-      else if (lang === "pa") speechLang = "pa-IN";
-      else if (lang === "bn") speechLang = "bn-IN";
-      
-      recognition.lang = speechLang;
+      // Determine language mappings across all 13 languages
+      const speechLangs: Record<string, string> = {
+        hi: "hi-IN", kn: "kn-IN", gu: "gu-IN", mr: "mr-IN",
+        ta: "ta-IN", te: "te-IN", ml: "ml-IN", pa: "pa-IN", bn: "bn-IN",
+        or: "or-IN", as: "as-IN", ks: "ur-IN", en: "en-IN"
+      };
+      recognition.lang = speechLangs[lang] || "en-IN";
       recognition.continuous = false;
       recognition.interimResults = false;
       
@@ -698,7 +1229,12 @@ export default function Home() {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
-        recognition.lang = lang === "hi" ? "hi-IN" : lang === "kn" ? "kn-IN" : "en-IN";
+              const langMap: Record<string, string> = {
+        hi: "hi-IN", kn: "kn-IN", gu: "gu-IN", mr: "mr-IN",
+        ta: "ta-IN", te: "te-IN", ml: "ml-IN", pa: "pa-IN", bn: "bn-IN",
+        or: "or-IN", as: "as-IN", ks: "ur-IN", en: "en-IN"
+      };
+      recognition.lang = langMap[lang] || "en-IN";
         recognition.interimResults = false;
         recognition.maxAlternatives = 1;
         
@@ -782,11 +1318,6 @@ export default function Home() {
               onChange={(e) => {
                 const selectedVal = e.target.value;
                 setLang(selectedVal);
-                if (selectedVal !== "en" && selectedVal !== "hi" && selectedVal !== "kn" && selectedVal !== "ta") {
-                  alert(selectedVal === "other" 
-                    ? "Regional translation support is being set up. Defaulting to English." 
-                    : `Translation support for this language is loading. Defaulting to English for now!`);
-                }
               }}
               className="text-xs bg-primary-700 text-white rounded font-bold focus:outline-none p-1 cursor-pointer border-none"
             >
@@ -822,12 +1353,14 @@ export default function Home() {
                   key={idx} 
                   className={`flex ${chat.sender === "user" ? "justify-end" : "justify-start"}`}
                 >
-                  <div className={`rounded-2xl p-3 max-w-[85%] shadow-sm ${
+                  <div className={`rounded-2xl p-3 max-w-[85%] shadow-sm break-words [overflow-wrap:anywhere] ${
                     chat.sender === "user" 
                       ? "bg-primary-600 text-white rounded-br-none" 
                       : "bg-white text-gray-800 border border-gray-100 rounded-bl-none"
                   }`}>
-                    <p className="text-sm whitespace-pre-line">{chat.text}</p>
+                    <div className="text-sm break-words [overflow-wrap:anywhere]">
+                      {chat.sender === "user" ? renderUserMessage(chat.text) : renderFormattedMessage(chat.text, false)}
+                    </div>
                     {chat.sender === "bot" && (
                       <div className="flex gap-3 mt-2 border-t border-gray-100 pt-2">
                         <button 
@@ -987,30 +1520,70 @@ export default function Home() {
                       <MapPin size={12} /> {priceData.mandi}
                     </p>
                   </div>
-                  <span className="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1">
-                    <UserCheck size={10} /> {t.gov_verified}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="bg-gray-50 p-2 rounded-lg">
-                    <p className="text-[10px] text-gray-500 font-bold uppercase">{t.min_price}</p>
-                    <p className="font-bold text-sm text-gray-800">₹{priceData.min_price}</p>
-                  </div>
-                  <div className="bg-primary-50 p-2 rounded-lg border border-primary-100">
-                    <p className="text-[10px] text-primary-700 font-bold uppercase">{t.modal_price}</p>
-                    <p className="font-extrabold text-base text-primary-600">₹{priceData.modal_price}</p>
-                  </div>
-                  <div className="bg-gray-50 p-2 rounded-lg">
-                    <p className="text-[10px] text-gray-500 font-bold uppercase">{t.max_price}</p>
-                    <p className="font-bold text-sm text-gray-800">₹{priceData.max_price}</p>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1">
+                      <UserCheck size={10} /> {t.gov_verified}
+                    </span>
+                    {priceData.is_enam && (
+                      <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+                        {t.enam_badge || "⚡ e-NAM Unified Market"}
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                <div className="text-xs text-gray-500 flex justify-between">
-                  <span>{t.last_updated}: {priceData.date}</span>
-                  <span>Source: {priceData.source}</span>
-                </div>
+                {/* Phase 4: e-NAM Trade Depth, Arrivals & Variety */}
+                {(priceData.arrivals_qty > 0 || priceData.variety) && (
+                  <div className="bg-amber-50/80 border border-amber-200/80 rounded-lg p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-1.5 text-amber-950 font-semibold">
+                      <span>📦</span>
+                      <span>{t.arrivals || "Daily Arrivals"}: <strong className="font-extrabold text-amber-950">{priceData.arrivals_qty} Qtl</strong></span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {priceData.variety && (
+                        <span className="bg-white/90 px-2 py-0.5 rounded border border-amber-300 text-[11px] font-bold text-gray-800">
+                          {t.variety_grade || "Variety"}: {priceData.variety} ({priceData.grade || "Grade A"})
+                        </span>
+                      )}
+                      <span className="bg-green-100 text-green-800 text-[10px] font-extrabold px-2 py-0.5 rounded uppercase">
+                        {priceData.trade_type || "e-Auction"}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {priceData.modal_price <= 0 ? (
+                  <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl text-center text-amber-900 space-y-1 my-2">
+                    <p className="font-bold text-sm">
+                      ⚠️ {t.not_found_alert || "No active price records found for this crop in this mandi."}
+                    </p>
+                    <p className="text-xs text-amber-700">
+                      {t.not_found_suggestion || "Would you like to check prices for other commodities or select a nearby market?"}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="bg-gray-50 p-2 rounded-lg">
+                        <p className="text-[10px] text-gray-500 font-bold uppercase">{t.min_price}</p>
+                        <p className="font-bold text-sm text-gray-800">₹{priceData.min_price}</p>
+                      </div>
+                      <div className="bg-primary-50 p-2 rounded-lg border border-primary-100">
+                        <p className="text-[10px] text-primary-700 font-bold uppercase">{t.modal_price}</p>
+                        <p className="font-extrabold text-base text-primary-600">₹{priceData.modal_price}</p>
+                      </div>
+                      <div className="bg-gray-50 p-2 rounded-lg">
+                        <p className="text-[10px] text-gray-500 font-bold uppercase">{t.max_price}</p>
+                        <p className="font-bold text-sm text-gray-800">₹{priceData.max_price}</p>
+                      </div>
+                    </div>
+
+                    <div className="text-xs text-gray-500 flex justify-between">
+                      <span>{t.last_updated}: {priceData.date}</span>
+                      <span>Source: {priceData.source}</span>
+                    </div>
+                  </>
+                )}
 
                 {/* 7-day trend chart */}
                 {trendData.length > 0 && (
@@ -1026,6 +1599,57 @@ export default function Home() {
                           <Line type="monotone" dataKey="modal_price" stroke="#16a34a" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                         </LineChart>
                       </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+
+                {/* Phase 5: UPAg Macro Intelligence & Seasonal Outlook Card */}
+                {upagOutlook && (
+                  <div className="mt-4 bg-gradient-to-br from-blue-50/70 to-indigo-50/50 border border-blue-200/80 rounded-xl p-3.5 shadow-xs space-y-3">
+                    <div className="flex justify-between items-center border-b border-blue-100 pb-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">📊</span>
+                        <h4 className="text-xs font-extrabold text-blue-950 uppercase tracking-wide">
+                          {t.upag_header || "UPAg Macro Intelligence & Seasonal Outlook"}
+                        </h4>
+                      </div>
+                      <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-900">
+                        {upagOutlook.supply_outlook}
+                      </span>
+                    </div>
+
+                    {/* Retail vs Wholesale Spread Bar */}
+                    <div className="bg-white p-2.5 rounded-lg border border-blue-100/90 shadow-xs space-y-2">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-bold text-gray-700">{t.retail_spread_label || "Wholesale vs Consumer Retail Spread"}:</span>
+                        <span className="font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded">
+                          +{upagOutlook.retail_spread_pct}% Retail Margin
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-center pt-1">
+                        <div className="bg-gray-50 p-2 rounded">
+                          <p className="text-[10px] text-gray-500 font-bold uppercase">APMC Wholesale Rate</p>
+                          <p className="font-bold text-sm text-gray-800">₹{upagOutlook.wholesale_price_avg}/kg</p>
+                        </div>
+                        <div className="bg-indigo-50/60 p-2 rounded border border-indigo-100">
+                          <p className="text-[10px] text-indigo-700 font-bold uppercase">City Retail (DoCA)</p>
+                          <p className="font-bold text-sm text-indigo-950">₹{upagOutlook.retail_price_avg}/kg</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Climate & Actionable Strategic Recommendation */}
+                    <div className="bg-amber-50/90 border-l-4 border-amber-500 p-2.5 rounded-r-lg text-xs space-y-1">
+                      <p className="font-extrabold text-amber-950 flex items-center gap-1">
+                        <span>💡</span> {t.advisory_label || "Strategic Farmer Advisory"}:
+                      </p>
+                      <p className="text-amber-900 font-medium text-[11px] leading-relaxed">
+                        {upagOutlook.advisory_recommendation}
+                      </p>
+                      <div className="mt-1.5 text-[10px] text-gray-500 flex justify-between items-center border-t border-amber-200/60 pt-1">
+                        <span>🌧️ CWWG Rainfall: {upagOutlook.rainfall_departure_pct}% (Reservoir: {upagOutlook.reservoir_storage_pct}%)</span>
+                        <span className="italic">{upagOutlook.source}</span>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1086,7 +1710,7 @@ export default function Home() {
                     )}
                     <div className="flex gap-2 mt-1">
                       <a 
-                        href={`https://wa.me/${b.phone.replace('+', '')}?text=Hello, I am interested in selling my ${b.commodity}`}
+                        href={`https://wa.me/${encodeURIComponent(b.phone.replace(/[^0-9]/g, ''))}?text=${encodeURIComponent(`Hello, I am interested in selling my ${b.commodity}`)}`}
                         target="_blank"
                         rel="noreferrer"
                         className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold text-xs py-2 rounded-lg flex items-center justify-center gap-1"
@@ -1094,7 +1718,7 @@ export default function Home() {
                         <MessageCircle size={14} /> {t.whats_app_chat}
                       </a>
                       <a 
-                        href={`tel:${b.phone}`}
+                        href={`tel:${encodeURIComponent(b.phone.replace(/[^0-9+]/g, ''))}`}
                         className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs p-2 rounded-lg flex items-center justify-center"
                       >
                         <PhoneCall size={14} />
@@ -1189,13 +1813,15 @@ export default function Home() {
                     chat.sender === "user" ? "self-end items-end" : "self-start items-start"
                   }`}
                 >
-                  <div className={`p-3 rounded-lg text-xs shadow-sm relative ${
+                  <div className={`p-3 rounded-lg text-xs shadow-sm relative break-words [overflow-wrap:anywhere] ${
                     chat.sender === "user" 
                       ? "bg-[#d9fdd3] text-gray-800 rounded-tr-none" 
                       : "bg-white text-gray-800 rounded-tl-none"
                   }`}>
                     <div className="flex items-start justify-between gap-2">
-                      <p className="whitespace-pre-line flex-1">{chat.text}</p>
+                      <div className="whitespace-normal flex-1 text-xs break-words [overflow-wrap:anywhere]">
+                        {chat.sender === "user" ? renderUserMessage(chat.text) : renderFormattedMessage(chat.text, false)}
+                      </div>
                       {chat.sender === "bot" && (
                         <button
                           onClick={() => speakText(chat.text)}

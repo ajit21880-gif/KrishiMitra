@@ -1590,7 +1590,7 @@ export default function Home() {
     }
 
     // 1. Primary: Browser Web Speech API (Auto-detects silence & auto-sends speech instantly without requiring second tap)
-    const SpeechRecognition = typeof window !== "undefined" ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) : None;
+    const SpeechRecognition = typeof window !== "undefined" ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) : null;
     if (SpeechRecognition) {
       try {
         setIsListening(true);

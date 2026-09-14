@@ -76,7 +76,22 @@ def start_background_price_sync():
         time.sleep(10)
         while True:
             api_key = os.environ.get("DATAGOV_API_KEY", "579b464db66ec23bdd000001a40e8a53305b4bcb40409d2efb7d48dc")
-            print("[All-India Syncer] Starting chunked background price sync across all Indian mandis...")
+            job_id = str(uuid.uuid4())
+            started_at = datetime.now().isoformat()
+            print(f"[All-India Syncer] Starting chunked background price sync (Job ID: {job_id})...")
+            
+            # Log job start in sync_logs
+            try:
+                log_conn = get_db_connection()
+                log_cursor = log_conn.cursor()
+                log_cursor.execute(
+                    "INSERT INTO sync_logs (id, job_name, started_at, status) VALUES (?, 'All-India Mandi Price Syncer', ?, 'RUNNING')",
+                    (job_id, started_at)
+                )
+                log_conn.commit()
+                log_conn.close()
+            except Exception as _log_err:
+                print(f"[All-India Syncer] Warning: Could not log job start: {_log_err}")
             
             rid = "9ef84268-d588-465a-a308-a864a43d0070"
             url = f"https://api.data.gov.in/resource/{rid}"
@@ -88,6 +103,7 @@ def start_background_price_sync():
             chunk_size = 100
             total_synced = 0
             max_pages = 20  # 20 pages * 100 = 2,000 live All-India records per sync run!
+            pages_processed = 0
             
             try:
                 conn = get_db_connection()
@@ -193,6 +209,7 @@ def start_background_price_sync():
 
                         conn.commit()
                         total_synced += page_synced
+                        pages_processed += 1
                         time.sleep(0.3)
 
                     except Exception as err:
@@ -200,10 +217,36 @@ def start_background_price_sync():
                         time.sleep(1)
 
                 conn.close()
+                completed_at = datetime.now().isoformat()
                 print(f"[All-India Syncer] Sync run completed! Total live records updated across India: {total_synced}.")
+
+                # Log job completion in sync_logs
+                try:
+                    log_conn = get_db_connection()
+                    log_cursor = log_conn.cursor()
+                    log_cursor.execute(
+                        "UPDATE sync_logs SET completed_at = ?, status = 'SUCCESS', records_synced = ?, pages_processed = ? WHERE id = ?",
+                        (completed_at, total_synced, pages_processed, job_id)
+                    )
+                    log_conn.commit()
+                    log_conn.close()
+                except Exception as _log_err:
+                    print(f"[All-India Syncer] Warning: Could not log job completion: {_log_err}")
                 
             except Exception as e:
+                completed_at = datetime.now().isoformat()
                 print(f"[All-India Syncer] Global syncer exception: {e}")
+                try:
+                    log_conn = get_db_connection()
+                    log_cursor = log_conn.cursor()
+                    log_cursor.execute(
+                        "UPDATE sync_logs SET completed_at = ?, status = 'ERROR', error_message = ? WHERE id = ?",
+                        (completed_at, str(e), job_id)
+                    )
+                    log_conn.commit()
+                    log_conn.close()
+                except Exception:
+                    pass
                 
             # Run scheduled syncs 3 times daily (every 8 hours = 28,800 seconds)
             time.sleep(28800)
@@ -215,6 +258,38 @@ start_background_price_sync()
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
+
+@app.route("/api/sync-status", methods=["GET"])
+def get_sync_status():
+    """
+    Returns the scheduled job execution log, total records synced, latest run status, and database metrics.
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM sync_logs ORDER BY started_at DESC LIMIT 10")
+        logs = [dict(row) for row in cursor.fetchall()]
+        
+        cursor.execute("SELECT COUNT(*) as total_prices, MAX(date) as latest_date FROM daily_prices")
+        price_stats = cursor.fetchone()
+        
+        today_str = datetime.now().date().isoformat()
+        cursor.execute("SELECT COUNT(*) as today_count FROM daily_prices WHERE date = ?", (today_str,))
+        today_stats = cursor.fetchone()
+        
+        conn.close()
+        return jsonify({
+            "status": "healthy",
+            "latest_job_run": logs[0] if logs else None,
+            "recent_logs": logs,
+            "database_metrics": {
+                "total_records": price_stats["total_prices"] if price_stats else 0,
+                "latest_record_date": price_stats["latest_date"] if price_stats else None,
+                "records_today": today_stats["today_count"] if today_stats else 0
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 SECRET_KEY = "krishimitra_super_secret_key"
 ALGORITHM = "HS256"

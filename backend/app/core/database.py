@@ -178,6 +178,20 @@ def init_db():
     )
     """)
     
+    # Create Sync Logs Audit Table (Schedule & Background Job Tracking)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS sync_logs (
+        id TEXT PRIMARY KEY,
+        job_name TEXT DEFAULT 'All-India Mandi Price Syncer',
+        started_at TEXT,
+        completed_at TEXT,
+        status TEXT,
+        records_synced INTEGER DEFAULT 0,
+        pages_processed INTEGER DEFAULT 0,
+        error_message TEXT
+    )
+    """)
+    
     conn.commit()
     conn.close()
-    print("Database tables initialized successfully with e-NAM and UPAg extensions.")
+    print("Database tables initialized successfully with e-NAM, UPAg, and Sync Tracking extensions.")

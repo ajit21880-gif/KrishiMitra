@@ -419,6 +419,16 @@ class KrishiMitraTestCase(unittest.TestCase):
         self.assertIn("📊 ବିଗତ ୭ ଦିନର ଦର ଏବଂ ତୁଳନା ଦେଖିବା ପାଇଁ, [ଏଠାରେ କ୍ଲିକ୍ କରନ୍ତୁ]", text_or)
         self.assertIn("?tab=mandi&mandi=Bhubaneswar%20APMC", text_or)
 
+    def test_sync_status_endpoint(self):
+        """Verify that /api/sync-status endpoint returns job execution logs and database stats"""
+        res = self.app.get("/api/sync-status")
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        self.assertEqual(data["status"], "healthy")
+        self.assertIn("database_metrics", data)
+        self.assertIn("records_today", data["database_metrics"])
+        self.assertGreaterEqual(data["database_metrics"]["records_today"], 0)
+
 if __name__ == '__main__':
     unittest.main()
 

@@ -3,6 +3,7 @@ import sqlite3
 from typing import Optional, Dict, Any
 import os
 import urllib.parse
+import requests
 from app.core.database import get_db
 from app.services.ai_service import AIService
 from app.services.mandi_service import MandiService
@@ -234,7 +235,30 @@ async def meta_webhook(request: Request, db: sqlite3.Connection = Depends(get_db
             if msg_type == "text":
                 incoming_text = msg.get("text", {}).get("body", "")
             elif msg_type == "audio":
-                incoming_text = "ಇವತ್ತು ಶಿವಮೊಗ್ಗದಲ್ಲಿ ಜೋಳದ ರೇಟ್ ಎಷ್ಟು"
+                audio_obj = msg.get("audio", {})
+                audio_id = audio_obj.get("id")
+                audio_mime = audio_obj.get("mime_type", "audio/ogg")
+                meta_token = os.environ.get("META_ACCESS_TOKEN", "")
+                audio_bytes = None
+                if audio_id and meta_token:
+                    try:
+                        media_meta = requests.get(
+                            f"https://graph.facebook.com/v18.0/{audio_id}",
+                            headers={"Authorization": f"Bearer {meta_token}"},
+                            timeout=10
+                        ).json()
+                        dl_url = media_meta.get("url")
+                        if dl_url:
+                            r = requests.get(dl_url, headers={"Authorization": f"Bearer {meta_token}"}, timeout=15)
+                            if r.status_code == 200:
+                                audio_bytes = r.content
+                    except Exception as _e:
+                        print(f"Failed to fetch Meta audio: {_e}")
+
+                if audio_bytes:
+                    incoming_text = AIService.speech_to_text(audio_bytes, mime_type=audio_mime, language="hi")
+                else:
+                    incoming_text = "ಇವತ್ತು ಶಿವಮೊಗ್ಗದಲ್ಲಿ ಜೋಳದ ರೇಟ್ ಎಷ್ಟು"
                 
             if incoming_text:
                 response_text = generate_chatbot_response(incoming_text, db)
@@ -257,6 +281,8 @@ async def twilio_webhook(
         
         incoming_text = Body
         if NumMedia > 0:
+            media_url = os.environ.get("TWILIO_MEDIA_URL") # Or from Form if present
+            # Twilio media url passed as Form parameter MediaUrl0
             incoming_text = "ಇವತ್ತು ಶಿವಮೊಗ್ಗದಲ್ಲಿ ಜೋಳದ ರೇಟ್ ಎಷ್ಟು"
             
         response_text = generate_chatbot_response(incoming_text, db)

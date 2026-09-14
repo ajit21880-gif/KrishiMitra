@@ -13,17 +13,44 @@ import requests
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 
+# Helper to auto-load .env file if present
+def _load_dotenv():
+    env_paths = [
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"),
+        os.path.join(os.path.abspath(os.path.dirname(__file__)), ".env"),
+        os.path.join(os.getcwd(), ".env"),
+        os.path.join(os.getcwd(), "backend", ".env")
+    ]
+    for p in env_paths:
+        if os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            k, v = line.split("=", 1)
+                            k = k.strip()
+                            v = v.strip().strip("\"'")
+                            if k and k not in os.environ:
+                                os.environ[k] = v
+            except Exception as e:
+                print(f"[Env Loader] Note reading {p}: {e}")
+            break
+
+_load_dotenv()
+
 # Add backend/ to Python path to import services correctly
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
 from app.core.database import get_db_connection, init_db
 from app.services.ai_service import AIService
+from app.services.bhashini_service import BhashiniService
+from app.services.translation_service import TranslationService
 from app.services.mandi_service import MandiService
 from app.services.whatsapp_service import WhatsAppService
 from app.services.enam_service import ENAMService
 from app.services.upag_service import UPAgService
 
-# Initialize SQLite tables on startup
 # Initialize SQLite tables on startup
 init_db()
 
@@ -33,11 +60,14 @@ try:
     _c_check = _conn_check.cursor()
     _c_check.execute("SELECT COUNT(*) FROM commodities")
     _comm_cnt = _c_check.fetchone()[0]
-    _conn_check.close()
     if _comm_cnt < 10:
         print("[Startup] Commodities count is low, running seed_database...")
         from seed_data import seed_database
         seed_database()
+    
+    # Auto-repair and enrich any missing commodity translations across all 13 languages
+    TranslationService.repair_and_enrich_commodities(_conn_check)
+    _conn_check.close()
 except Exception as _e:
     print(f"[Startup] Error checking/seeding database: {_e}")
 
@@ -133,9 +163,11 @@ def start_background_price_sync():
                             
                             if not comm_row:
                                 comm_id = str(uuid.uuid4())
+                                trans_dict = TranslationService.get_or_create_commodity_translations(comm_gov, enable_network=True)
+                                json_local = json.dumps(trans_dict, ensure_ascii=False)
                                 cursor.execute(
                                     "INSERT INTO commodities (id, commodity_name, local_name, category) VALUES (?, ?, ?, 'General')",
-                                    (comm_id, comm_gov, comm_gov)
+                                    (comm_id, comm_gov, json_local)
                                 )
                             else:
                                 comm_id = comm_row["id"]
@@ -810,6 +842,13 @@ def get_states():
     conn.close()
     return jsonify(states)
 
+@app.route("/api/translations/locations", methods=["GET"])
+def get_location_translations():
+    return jsonify({
+        "states": TranslationService.STATE_TRANSLATIONS,
+        "districts": TranslationService.DISTRICT_TRANSLATIONS
+    })
+
 @app.route("/api/mandi/details", methods=["GET"])
 def get_mandi_details():
     mandi_name = request.args.get("mandi_name")
@@ -876,13 +915,14 @@ def get_commodities():
 def get_market_outlook():
     state = request.args.get("state", "All India")
     commodity = request.args.get("commodity", "")
+    lang = request.args.get("lang", "en")
     
     if not commodity:
         return jsonify({"error": "commodity parameter is required"}), 400
         
     conn = get_db_connection()
     try:
-        outlook = UPAgService.get_macro_outlook(conn, state, commodity)
+        outlook = UPAgService.get_macro_outlook(conn, state, commodity, lang=lang)
         return jsonify(outlook)
     except Exception as e:
         app.logger.exception("Market outlook query error")
@@ -1099,7 +1139,30 @@ def meta_webhook():
             if msg_type == "text":
                 incoming_text = msg.get("text", {}).get("body", "")
             elif msg_type == "audio":
-                incoming_text = "ಇವತ್ತು ಶಿವಮೊಗ್ಗದಲ್ಲಿ ಜೋಳದ ರೇಟ್ ಎಷ್ಟು"
+                audio_obj = msg.get("audio", {})
+                audio_id = audio_obj.get("id")
+                audio_mime = audio_obj.get("mime_type", "audio/ogg")
+                meta_token = os.environ.get("META_ACCESS_TOKEN", "")
+                audio_bytes = None
+                if audio_id and meta_token:
+                    try:
+                        media_meta = requests.get(
+                            f"https://graph.facebook.com/v18.0/{audio_id}",
+                            headers={"Authorization": f"Bearer {meta_token}"},
+                            timeout=10
+                        ).json()
+                        dl_url = media_meta.get("url")
+                        if dl_url:
+                            r = requests.get(dl_url, headers={"Authorization": f"Bearer {meta_token}"}, timeout=15)
+                            if r.status_code == 200:
+                                audio_bytes = r.content
+                    except Exception as _e:
+                        print(f"Failed to fetch Meta audio: {_e}")
+
+                if audio_bytes:
+                    incoming_text = AIService.speech_to_text(audio_bytes, mime_type=audio_mime, language="hi")
+                else:
+                    incoming_text = "ಇವತ್ತು ಶಿವಮೊಗ್ಗದಲ್ಲಿ ಜೋಳದ ರೇಟ್ ಎಷ್ಟು"
                 
             if incoming_text:
                 conn = get_db_connection()
@@ -1119,11 +1182,35 @@ def twilio_webhook():
         body = request.form.get("Body", "")
         num_media = int(request.form.get("NumMedia", 0))
         
-        print(f"Twilio webhook received from {from_num}: {body}")
+        print(f"Twilio webhook received from {from_num}")
         
         incoming_text = body
         if num_media > 0:
-            incoming_text = "ಇವತ್ತು ಶಿವಮೊಗ್ಗದಲ್ಲಿ ಜೋಳದ ರೇಟ್ ಎಷ್ಟು"
+            media_url = request.form.get("MediaUrl0")
+            media_type = request.form.get("MediaContentType0", "audio/ogg")
+            if media_url and "audio" in media_type:
+                parsed_url = urllib.parse.urlparse(media_url)
+                allowed_hosts = ("api.twilio.com", "media.twiliocdn.com", "lookaside.fbsbx.com")
+                host = (parsed_url.hostname or "").lower()
+                if parsed_url.scheme == "https" and any(host == d or host.endswith("." + d) for d in allowed_hosts):
+                    safe_path = parsed_url.path or ""
+                    if safe_path.startswith("/"):
+                        safe_media_url = urllib.parse.urlunparse((
+                            "https",
+                            host,
+                            safe_path,
+                            "",
+                            parsed_url.query or "",
+                            ""
+                        ))
+                        try:
+                            r = requests.get(safe_media_url, timeout=15, allow_redirects=False)
+                            if r.status_code == 200:
+                                incoming_text = AIService.speech_to_text(r.content, mime_type=media_type, language="hi")
+                        except Exception as _e:
+                            print(f"Failed to download Twilio audio: {_e}")
+            if not incoming_text:
+                incoming_text = "ಇವತ್ತು ಶಿವಮೊಗ್ಗದಲ್ಲಿ ಜೋಳದ ರೇಟ್ ಎಷ್ಟು"
             
         conn = get_db_connection()
         response_text = generate_chatbot_response(incoming_text, conn)
@@ -1194,7 +1281,7 @@ def process_voice_query():
         return jsonify({"detail": "No audio file or base64 data received"}), 400
 
     transcribed_text = AIService.speech_to_text(audio_bytes, mime_type=mime_type)
-    print(f"Transcribed voice note: '{transcribed_text}'")
+    print("Voice query audio transcribed successfully")
 
     conn = get_db_connection()
     try:
@@ -1219,14 +1306,111 @@ def process_voice_query():
     finally:
         conn.close()
 
+# =======================
+# Voice & Bhashini Endpoints
+# =======================
+
+@app.route("/api/voice/tts", methods=["GET"])
+def voice_tts_stream():
+    text = request.args.get("text", "")
+    lang = request.args.get("lang", "en")
+    if not text:
+        return jsonify({"detail": "text parameter is required"}), 400
+    
+    b64_audio = AIService.text_to_speech_base64(text, lang=lang)
+    if not b64_audio:
+        return jsonify({"detail": "Failed to synthesize speech"}), 500
+    
+    import base64
+    audio_bytes = base64.b64decode(b64_audio)
+    return Response(audio_bytes, mimetype="audio/wav")
+
+@app.route("/api/voice/transcribe", methods=["POST"])
+def voice_transcribe():
+    audio_bytes = None
+    mime_type = "audio/wav"
+    lang = request.form.get("language") or "hi"
+    
+    if request.is_json:
+        data = request.get_json() or {}
+        b64_data = data.get("audio")
+        mime_type = data.get("mime_type", "audio/wav")
+        lang = data.get("language", "hi")
+        if b64_data:
+            import base64
+            if "," in b64_data:
+                b64_data = b64_data.split(",", 1)[1]
+            audio_bytes = base64.b64decode(b64_data)
+    elif "file" in request.files:
+        f = request.files["file"]
+        audio_bytes = f.read()
+        mime_type = f.mimetype or "audio/wav"
+        lang = request.form.get("language", "hi")
+    
+    if not audio_bytes:
+        return jsonify({"detail": "No audio content provided"}), 400
+        
+    transcribed_text = AIService.speech_to_text(audio_bytes, mime_type=mime_type, language=lang)
+    return jsonify({
+        "text": transcribed_text,
+        "language": lang
+    })
+
+@app.route("/api/voice/synthesize", methods=["POST"])
+def voice_synthesize():
+    data = request.get_json() or {}
+    text = data.get("text", "")
+    lang = data.get("language", "hi")
+    gender = data.get("gender", "female")
+    
+    if not text:
+        return jsonify({"detail": "text field is required"}), 400
+        
+    b64_audio = None
+    if BhashiniService.is_available():
+        b64_audio = BhashiniService.text_to_speech(text, source_lang=lang, gender=gender)
+        
+    if not b64_audio:
+        b64_audio = AIService.text_to_speech_base64(text, lang=lang)
+        
+    if not b64_audio:
+        return jsonify({"detail": "Failed to synthesize speech"}), 500
+        
+    return jsonify({
+        "audio_base64": b64_audio,
+        "mime_type": "audio/wav",
+        "language": lang
+    })
+
+@app.route("/api/voice/translate", methods=["POST"])
+def voice_translate():
+    data = request.get_json() or {}
+    text = data.get("text", "")
+    src = data.get("source_language", "en")
+    tgt = data.get("target_language", "hi")
+    
+    if not text:
+        return jsonify({"detail": "text field is required"}), 400
+        
+    translated = BhashiniService.translate_text(text, source_lang=src, target_lang=tgt)
+    return jsonify({
+        "original_text": text,
+        "translated_text": translated or text,
+        "source_language": src,
+        "target_language": tgt
+    })
+
 @app.route("/api/debug", methods=["GET"])
 def debug_env():
     gemini_key = os.environ.get("GEMINI_API_KEY")
     datagov_key = os.environ.get("DATAGOV_API_KEY")
     
+    bhashini_available = BhashiniService.is_available()
+    
     status = {
         "gemini_key_present": bool(gemini_key),
         "datagov_key_present": bool(datagov_key),
+        "bhashini_configured": bhashini_available,
         "gemini_key_prefix": gemini_key[:4] if gemini_key else None,
         "gemini_api_test": "Not Tested"
     }

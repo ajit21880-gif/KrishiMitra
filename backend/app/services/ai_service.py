@@ -527,42 +527,57 @@ class AIService:
 
     @staticmethod
     def speech_to_text(audio_bytes: bytes, mime_type: str = "audio/ogg", language: str = "en") -> str:
-        """Transcribe audio voice note using Gemini multimodal API or fallback defaults, supporting code-mixed colloquial speech"""
-        api_key = os.environ.get("GEMINI_API_KEY")
-        if api_key and audio_bytes:
+        """Transcribe audio voice note using Bhashini ASR, Gemini multimodal API, or fallback defaults"""
+        if audio_bytes:
+            # 1. Primary: Digital India Bhashini ASR
             try:
-                import base64
-                encoded_audio = base64.b64encode(audio_bytes).decode('utf-8')
-                clean_mime = mime_type.split(";")[0].strip() if mime_type else "audio/ogg"
-                prompt = (
-                    "You are an audio transcription engine for an Indian agriculture voice assistant. "
-                    "Transcribe the spoken voice note accurately into text. "
-                    "Support all 13 Indian languages (Hindi, Kannada, Tamil, Gujarati, Marathi, Telugu, Malayalam, Punjabi, Bengali, Odia, Assamese, Kashmiri, English). "
-                    "Transcribe code-mixed, colloquial Indian speech accurately (e.g. users mixing English words like 'rate', 'price', 'mandi', 'forecast', 'today' with regional languages like Hindi, Odia, Kannada, Marathi, etc., or speaking in colloquial dialects). Preserve mixed English words as spoken. "
-                    "Return ONLY the transcribed text string without markdown, quotes, or commentary."
-                )
-                payload = {
-                    "contents": [{
-                        "parts": [
-                            {"text": prompt},
-                            {"inlineData": {"mimeType": clean_mime, "data": encoded_audio}}
-                        ]
-                    }]
-                }
-                headers = {"Content-Type": "application/json"}
-                models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
-                for model in models:
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-                    res = requests.post(url, headers=headers, json=payload, timeout=12)
-                    if res.status_code == 200:
-                        res_data = res.json()
-                        text = res_data["candidates"][0]["content"]["parts"][0]["text"].strip()
-                        if text:
-                            return text
-                    elif res.status_code == 429:
-                        continue
+                from app.services.bhashini_service import BhashiniService
+                if BhashiniService.is_available():
+                    import base64
+                    encoded_audio = base64.b64encode(audio_bytes).decode('utf-8')
+                    fmt = "wav"
+                    asr_res = BhashiniService.speech_to_text(encoded_audio, source_lang=language, audio_format=fmt)
+                    if asr_res and asr_res.get("text"):
+                        return asr_res["text"]
             except Exception as e:
-                print(f"Gemini Audio Transcription error: {e}")
+                print(f"Bhashini ASR fallback: {e}")
+
+            # 2. Secondary: Gemini multimodal transcription
+            api_key = os.environ.get("GEMINI_API_KEY")
+            if api_key:
+                try:
+                    import base64
+                    encoded_audio = base64.b64encode(audio_bytes).decode('utf-8')
+                    clean_mime = mime_type.split(";")[0].strip() if mime_type else "audio/ogg"
+                    prompt = (
+                        "You are an audio transcription engine for an Indian agriculture voice assistant. "
+                        "Transcribe the spoken voice note accurately into text. "
+                        "Support all 13 Indian languages (Hindi, Kannada, Tamil, Gujarati, Marathi, Telugu, Malayalam, Punjabi, Bengali, Odia, Assamese, Kashmiri, English). "
+                        "Transcribe code-mixed, colloquial Indian speech accurately (e.g. users mixing English words like 'rate', 'price', 'mandi', 'forecast', 'today' with regional languages like Hindi, Odia, Kannada, Marathi, etc., or speaking in colloquial dialects). Preserve mixed English words as spoken. "
+                        "Return ONLY the transcribed text string without markdown, quotes, or commentary."
+                    )
+                    payload = {
+                        "contents": [{
+                            "parts": [
+                                {"text": prompt},
+                                {"inlineData": {"mimeType": clean_mime, "data": encoded_audio}}
+                            ]
+                        }]
+                    }
+                    headers = {"Content-Type": "application/json"}
+                    models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+                    for model in models:
+                        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+                        res = requests.post(url, headers=headers, json=payload, timeout=12)
+                        if res.status_code == 200:
+                            res_data = res.json()
+                            text = res_data["candidates"][0]["content"]["parts"][0]["text"].strip()
+                            if text:
+                                return text
+                        elif res.status_code == 429:
+                            continue
+                except Exception as e:
+                    print(f"Gemini Audio Transcription error: {e}")
 
         defaults = {
             "gu": "અમદાવાદમાં સફરજનનો ભાવ શું છે",
@@ -579,9 +594,21 @@ class AIService:
 
     @staticmethod
     def text_to_speech_base64(text: str, lang: str = "en") -> Optional[str]:
-        """Convert response text into natural voice audio Base64 string via gTTS"""
+        """Convert response text into natural voice audio Base64 string via Bhashini TTS with gTTS fallback"""
         if not text or os.environ.get("TESTING") == "1":
             return None
+
+        # 1. Primary: Digital India Bhashini high-fidelity regional TTS
+        try:
+            from app.services.bhashini_service import BhashiniService
+            if BhashiniService.is_available():
+                audio_b64 = BhashiniService.text_to_speech(text, source_lang=lang)
+                if audio_b64:
+                    return audio_b64
+        except Exception as e:
+            print(f"Bhashini TTS fallback: {e}")
+
+        # 2. Secondary: Fallback to gTTS
         try:
             import importlib
             gtts_module = importlib.import_module("gtts")

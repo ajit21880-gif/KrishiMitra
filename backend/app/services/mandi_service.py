@@ -307,9 +307,13 @@ class MandiService:
                 comm_row = cursor.fetchone()
                 if not comm_row:
                     comm_id = str(uuid.uuid4())
+                    from app.services.translation_service import TranslationService
+                    import json
+                    trans_dict = TranslationService.get_or_create_commodity_translations(commodity_name, enable_network=True)
+                    json_local = json.dumps(trans_dict, ensure_ascii=False)
                     cursor.execute(
                         "INSERT INTO commodities (id, commodity_name, local_name, category) VALUES (?, ?, ?, 'General')",
-                        (comm_id, commodity_name, commodity_name)
+                        (comm_id, commodity_name, json_local)
                     )
                 else:
                     comm_id = comm_row["id"]

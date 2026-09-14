@@ -11,7 +11,7 @@ class WhatsAppService:
         from_number = os.environ.get("TWILIO_WHATSAPP_FROM", "whatsapp:+14155238886") # Twilio sandbox number
         
         if not account_sid or not auth_token:
-            print(f"[SIMULATED TWILIO OUTBOUND] To: {to_number} | Body: {body}")
+            print(f"[SIMULATED TWILIO OUTBOUND] Message dispatched to: {to_number}")
             return True
             
         url = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
@@ -47,7 +47,7 @@ class WhatsAppService:
         access_token = os.environ.get("META_ACCESS_TOKEN")
         
         if not phone_number_id or not access_token:
-            print(f"[SIMULATED META OUTBOUND] To: {to_number} | Body: {body}")
+            print(f"[SIMULATED META OUTBOUND] Message dispatched to: {to_number}")
             return True
             
         url = f"https://graph.facebook.com/v18.0/{phone_number_id}/messages"

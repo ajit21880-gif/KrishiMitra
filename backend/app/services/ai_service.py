@@ -579,18 +579,7 @@ class AIService:
                 except Exception as e:
                     print(f"Gemini Audio Transcription error: {e}")
 
-        defaults = {
-            "gu": "અમદાવાદમાં સફરજનનો ભાવ શું છે",
-            "mr": "पुण्यात कांद्याचा भाव काय आहे",
-            "ta": "சென்னையில் தக்காளி விலை என்ன",
-            "te": "హైదరాబాద్ లో పత్తి ధర ఎంత",
-            "kn": "ಶಿವಮೊಗ್ಗದಲ್ಲಿ ಮೆಕ್ಕೆಜೋಳದ ದರ ಎಷ್ಟು",
-            "hi": "इंदौर में गेहूं का भाव क्या है",
-            "or": "ଭୁବନେଶ୍ୱରରେ ଧାନର rate କେତେ",
-            "as": "গুৱাহাটীত আলুৰ rate কিমান",
-            "ks": "سوپور مَنٛز ژوٗنٛٹھ ہُنٛد rate کِیٛاہ چُھ"
-        }
-        return defaults.get(language, "What is today's Apple price in Sopore")
+        return ""
 
     @staticmethod
     def text_to_speech_base64(text: str, lang: str = "en") -> Optional[str]:

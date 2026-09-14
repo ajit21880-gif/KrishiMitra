@@ -1574,22 +1574,62 @@ export default function Home() {
     }
   };
 
-  // Voice recording handler using MediaRecorder (Bhashini ASR) with Web Speech fallback
+  // Voice recording handler prioritizing browser Web Speech API for auto-silence detection & instant auto-send
   const toggleListening = async () => {
     stopAudio();
 
     if (isListening) {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-        mediaRecorderRef.current.stop();
-      }
       if (recognitionRef.current) {
-        recognitionRef.current.stop();
+        try { recognitionRef.current.stop(); } catch (e) {}
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        try { mediaRecorderRef.current.stop(); } catch (e) {}
       }
       setIsListening(false);
       return;
     }
 
-    // 1. Try recording real audio via MediaRecorder for Bhashini ASR
+    // 1. Primary: Browser Web Speech API (Auto-detects silence & auto-sends speech instantly without requiring second tap)
+    const SpeechRecognition = typeof window !== "undefined" ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) : None;
+    if (SpeechRecognition) {
+      try {
+        setIsListening(true);
+        const recognition = new SpeechRecognition();
+        const speechLangs: Record<string, string> = {
+          hi: "hi-IN", kn: "kn-IN", gu: "gu-IN", mr: "mr-IN",
+          ta: "ta-IN", te: "te-IN", ml: "ml-IN", pa: "pa-IN", bn: "bn-IN",
+          or: "or-IN", as: "as-IN", ks: "ur-IN", en: "en-IN"
+        };
+        recognition.lang = speechLangs[lang] || "en-IN";
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        recognition.onresult = (event: any) => {
+          setIsListening(false);
+          const transcript = event.results[0]?.[0]?.transcript;
+          if (transcript && transcript.trim()) {
+            handleAssistantSend(transcript.trim());
+          }
+        };
+
+        recognition.onerror = (err: any) => {
+          console.warn("SpeechRecognition error:", err);
+          setIsListening(false);
+        };
+        
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+
+        recognitionRef.current = recognition;
+        recognition.start();
+        return;
+      } catch (err) {
+        console.warn("Web Speech API start error, falling back to MediaRecorder:", err);
+      }
+    }
+
+    // 2. Secondary Fallback: MediaRecorder for browsers without native Web Speech API (e.g. Firefox)
     if (typeof navigator !== "undefined" && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -1622,64 +1662,32 @@ export default function Home() {
                 if (res.ok) {
                   const data = await res.json();
                   if (data.text && data.text.trim()) {
-                    handleAssistantSend(data.text);
+                    handleAssistantSend(data.text.trim());
                   }
                 }
               };
             } catch (err) {
-              console.error("Bhashini ASR transcribe error:", err);
+              console.error("Transcribe error:", err);
             }
           }
         };
 
         setIsListening(true);
         mediaRecorder.start();
+        
+        // Auto-stop after 6 seconds if user forgets to tap stop
+        setTimeout(() => {
+          if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+            mediaRecorderRef.current.stop();
+          }
+        }, 6000);
         return;
       } catch (err) {
-        console.warn("Microphone getUserMedia not available or permitted, falling back to Web Speech:", err);
+        console.warn("Microphone getUserMedia not available:", err);
       }
     }
 
-    // 2. Fallback: Browser Web Speech API
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert("Microphone recording is not supported in this browser. Defaulting to mock prompt.");
-      if (isListening) {
-        setIsListening(false);
-        handleAssistantSend("What is today's Wheat rate in Shimoga?");
-      } else {
-        setIsListening(true);
-        setTimeout(() => {
-          setIsListening(false);
-          handleAssistantSend("What is today's Wheat rate in Shimoga?");
-        }, 3000);
-      }
-      return;
-    }
-
-    setIsListening(true);
-    const recognition = new SpeechRecognition();
-    const speechLangs: Record<string, string> = {
-      hi: "hi-IN", kn: "kn-IN", gu: "gu-IN", mr: "mr-IN",
-      ta: "ta-IN", te: "te-IN", ml: "ml-IN", pa: "pa-IN", bn: "bn-IN",
-      or: "or-IN", as: "as-IN", ks: "ur-IN", en: "en-IN"
-    };
-    recognition.lang = speechLangs[lang] || "en-IN";
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      if (transcript) {
-        handleAssistantSend(transcript);
-      }
-    };
-
-    recognition.onerror = () => setIsListening(false);
-    recognition.onend = () => setIsListening(false);
-
-    recognitionRef.current = recognition;
-    recognition.start();
+    setIsListening(false);
   };
 
   // WhatsApp simulation send
